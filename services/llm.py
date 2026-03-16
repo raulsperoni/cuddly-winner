@@ -1,6 +1,12 @@
 import os
 
 from openai import OpenAI
+from pydantic import BaseModel
+
+
+class SuggestionOutput(BaseModel):
+    text: str
+    notes: str = ''
 
 
 def get_client():
@@ -31,22 +37,49 @@ def get_suggestion(block, suggestion_type: str) -> str:
     model = os.environ.get(
         'OPENROUTER_MODEL', 'anthropic/claude-sonnet-4-5'
     )
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {
-                'role': 'system',
-                'content': (
-                    'You are a professional editor helping draft policy '
-                    'and political documents. Return only the revised '
-                    'paragraph text, nothing else.'
-                ),
-            },
-            {
-                'role': 'user',
-                'content': f'{instruction}\n\n{current.text}',
-            },
-        ],
-        max_tokens=1000,
-    )
-    return response.choices[0].message.content.strip()
+    messages = [
+        {
+            'role': 'system',
+            'content': (
+                'You are a professional editor helping draft policy '
+                'and political documents. Respond with a JSON object '
+                'containing two fields: "text" (the revised paragraph, '
+                'plain prose only — no markdown, no bullet points) and '
+                '"notes" (brief summary of changes made).'
+            ),
+        },
+        {
+            'role': 'user',
+            'content': f'{instruction}\n\n{current.text}',
+        },
+    ]
+
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            response_format={'type': 'json_object'},
+            max_tokens=1500,
+        )
+        raw = response.choices[0].message.content
+        output = SuggestionOutput.model_validate_json(raw)
+        return output.text
+    except Exception:
+        # Fall back: plain text request without structured output
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    'role': 'system',
+                    'content': (
+                        'You are a professional editor helping draft policy '
+                        'and political documents. Return only the revised '
+                        'paragraph text — plain prose, no markdown, '
+                        'no bullet points, no explanations.'
+                    ),
+                },
+                messages[1],
+            ],
+            max_tokens=1500,
+        )
+        return response.choices[0].message.content.strip()

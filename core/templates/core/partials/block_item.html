@@ -2,14 +2,20 @@
 <div id="block-{{ block.pk }}"
      class="bg-gray-900 border border-gray-800 rounded-lg p-5 space-y-4">
 
-  <!-- Block content -->
+  <!-- Block content (click to edit) -->
   <div>
     {% if current and current.text %}
-      <p class="text-gray-200 leading-relaxed whitespace-pre-wrap">
-        {{ current.text }}
-      </p>
+      <p class="text-gray-200 leading-relaxed whitespace-pre-wrap cursor-text"
+         hx-get="{% url 'block_edit' document.pk block.pk %}"
+         hx-target="#block-{{ block.pk }}"
+         hx-swap="outerHTML"
+         hx-trigger="click">{{ current.text }}</p>
     {% else %}
-      <p class="text-gray-600 italic text-sm">Empty block — click Edit to add text.</p>
+      <p class="text-gray-500 italic text-sm cursor-text"
+         hx-get="{% url 'block_edit' document.pk block.pk %}"
+         hx-target="#block-{{ block.pk }}"
+         hx-swap="outerHTML"
+         hx-trigger="click">Click to write…</p>
     {% endif %}
     <div class="flex items-center gap-2 mt-2">
       <span class="text-xs text-gray-600">Block #{{ block.position }}</span>
@@ -28,17 +34,6 @@
 
   <!-- Controls -->
   <div class="flex items-center gap-3 flex-wrap" x-data="{ suggestOpen: false }">
-    <!-- Edit button -->
-    <button
-      hx-get="{% url 'block_edit' document.pk block.pk %}"
-      hx-target="#block-{{ block.pk }}"
-      hx-swap="outerHTML"
-      class="text-xs text-indigo-400 hover:text-indigo-300 border
-             border-indigo-900 hover:border-indigo-700 rounded px-3 py-1
-             transition">
-      Edit
-    </button>
-
     <!-- AI Suggest -->
     <button @click="suggestOpen = !suggestOpen"
             class="text-xs text-purple-400 hover:text-purple-300 border
@@ -53,6 +48,7 @@
         <form
           hx-post="{% url 'block_suggest' document.pk block.pk %}"
           hx-target="#block-{{ block.pk }}-suggestions"
+          hx-indicator="#block-{{ block.pk }}-thinking"
           hx-swap="beforeend">
           {% csrf_token %}
           <input type="hidden" name="suggestion_type" value="{{ value }}">
@@ -67,6 +63,7 @@
           <form
             hx-post="{% url 'block_suggest' document.pk block.pk %}"
             hx-target="#block-{{ block.pk }}-suggestions"
+            hx-indicator="#block-{{ block.pk }}-thinking"
             hx-swap="beforeend">
             {% csrf_token %}
             <input type="hidden" name="suggestion_type" value="{{ value }}">
@@ -78,6 +75,16 @@
           </form>
         {% endfor %}
       {% endfor %}
+      <span id="block-{{ block.pk }}-thinking"
+            class="htmx-indicator items-center gap-1 text-xs text-purple-400 italic">
+        <svg class="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+          <circle class="opacity-25" cx="12" cy="12" r="10"
+                  stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+        AI thinking…
+      </span>
     </div>
   </div>
 

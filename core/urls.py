@@ -25,6 +25,16 @@ urlpatterns = [
         name='block_suggest',
     ),
     path(
+        'documents/<int:pk>/blocks/<int:block_pk>/cancel/',
+        views.block_cancel,
+        name='block_cancel',
+    ),
+    path(
+        'documents/<int:pk>/blocks/<int:block_pk>/split/',
+        views.block_split,
+        name='block_split',
+    ),
+    path(
         'documents/<int:pk>/blocks/<int:block_pk>'
         '/suggestions/<int:suggestion_pk>/accept/',
         views.suggestion_accept,

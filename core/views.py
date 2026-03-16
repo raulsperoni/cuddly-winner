@@ -1,7 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import F
 from django.http import HttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 
 from .forms import (
     BlockTextForm, DocumentForm, SnapshotExportForm, SuggestForm
@@ -30,23 +32,29 @@ def document_create(request):
             doc = form.save(commit=False)
             doc.created_by = request.user
             doc.save()
-            block = Block.objects.create(
-                document=doc,
-                position=0,
-                created_by=request.user,
+            raw = form.cleaned_data.get('initial_content', '').strip()
+            paragraphs = (
+                [p.strip() for p in raw.split('\n\n') if p.strip()]
+                if raw else ['']
             )
-            BlockVersion.objects.create(
-                block=block,
-                text='',
-                author_type=BlockVersion.AUTHOR_HUMAN,
-                author=request.user,
-                is_current=True,
-            )
+            for i, text in enumerate(paragraphs):
+                block = Block.objects.create(
+                    document=doc,
+                    position=i,
+                    created_by=request.user,
+                )
+                BlockVersion.objects.create(
+                    block=block,
+                    text=text,
+                    author_type=BlockVersion.AUTHOR_HUMAN,
+                    author=request.user,
+                    is_current=True,
+                )
             AuditEvent.objects.create(
                 document=doc,
                 event_type=AuditEvent.EVT_DOCUMENT_CREATED,
                 actor=request.user,
-                data={'title': doc.title},
+                data={'title': doc.title, 'block_count': len(paragraphs)},
             )
             return redirect('document_detail', pk=doc.pk)
     else:
@@ -116,33 +124,37 @@ def block_edit(request, pk, block_pk):
         return HttpResponse('Forbidden', status=403)
     block = get_object_or_404(Block, pk=block_pk, document=doc)
 
+    current = block.current_version()
+    original_text = current.text if current else ''
+
     if request.method == 'GET':
-        current = block.current_version()
-        form = BlockTextForm(initial={'text': current.text if current else ''})
+        form = BlockTextForm(initial={'text': original_text})
         return render(request, 'core/partials/block_edit_form.html', {
             'block': block,
             'document': doc,
             'form': form,
+            'original_text': original_text,
         })
 
     form = BlockTextForm(request.POST)
     if form.is_valid():
-        current = block.current_version()
-        new_version = BlockVersion.objects.create(
-            block=block,
-            text=form.cleaned_data['text'],
-            author_type=BlockVersion.AUTHOR_HUMAN,
-            author=request.user,
-            based_on_version=current,
-            is_current=True,
-        )
-        AuditEvent.objects.create(
-            document=doc,
-            event_type=AuditEvent.EVT_BLOCK_EDITED,
-            actor=request.user,
-            block=block,
-            data={'version_id': new_version.pk},
-        )
+        new_text = form.cleaned_data['text']
+        if new_text != original_text:
+            new_version = BlockVersion.objects.create(
+                block=block,
+                text=new_text,
+                author_type=BlockVersion.AUTHOR_HUMAN,
+                author=request.user,
+                based_on_version=current,
+                is_current=True,
+            )
+            AuditEvent.objects.create(
+                document=doc,
+                event_type=AuditEvent.EVT_BLOCK_EDITED,
+                actor=request.user,
+                block=block,
+                data={'version_id': new_version.pk},
+            )
     return render(request, 'core/partials/block_item.html', {
         'block': block,
         'document': doc,
@@ -168,7 +180,8 @@ def block_suggest(request, pk, block_pk):
         text = llm_service.get_suggestion(block, suggestion_type)
     except Exception as exc:
         return HttpResponse(
-            f'LLM error: {exc}', status=502
+            f'<div class="bg-red-950 border border-red-800 rounded p-3 text-xs'
+            f' text-red-300">AI request failed: {exc}</div>'
         )
 
     suggestion = Suggestion.objects.create(
@@ -353,6 +366,85 @@ def snapshot_export(request, pk, snapshot_pk):
         f'Snapshot exported to {repo} (commit {commit_sha[:7]}).',
     )
     return redirect('document_detail', pk=pk)
+
+
+@login_required
+def block_cancel(request, pk, block_pk):
+    doc = get_object_or_404(Document, pk=pk)
+    if doc.created_by != request.user:
+        return HttpResponse('Forbidden', status=403)
+    block = get_object_or_404(Block, pk=block_pk, document=doc)
+    return render(request, 'core/partials/block_item.html', {
+        'block': block,
+        'document': doc,
+    })
+
+
+@login_required
+def block_split(request, pk, block_pk):
+    doc = get_object_or_404(Document, pk=pk)
+    if doc.created_by != request.user:
+        return HttpResponse('Forbidden', status=403)
+    block = get_object_or_404(Block, pk=block_pk, document=doc)
+    if request.method != 'POST':
+        return HttpResponse('Method not allowed', status=405)
+
+    before = request.POST.get('before', '')
+    after = request.POST.get('after', '')
+
+    current = block.current_version()
+    BlockVersion.objects.create(
+        block=block,
+        text=before,
+        author_type=BlockVersion.AUTHOR_HUMAN,
+        author=request.user,
+        based_on_version=current,
+        is_current=True,
+    )
+
+    Block.objects.filter(
+        document=doc, position__gt=block.position
+    ).update(position=F('position') + 1)
+
+    new_block = Block.objects.create(
+        document=doc,
+        position=block.position + 1,
+        created_by=request.user,
+    )
+    BlockVersion.objects.create(
+        block=new_block,
+        text=after,
+        author_type=BlockVersion.AUTHOR_HUMAN,
+        author=request.user,
+        is_current=True,
+    )
+    AuditEvent.objects.create(
+        document=doc,
+        event_type=AuditEvent.EVT_BLOCK_CREATED,
+        actor=request.user,
+        block=new_block,
+        data={'position': new_block.position, 'split_from': block.pk},
+    )
+
+    ctx = {'document': doc, 'request': request}
+    old_html = render_to_string(
+        'core/partials/block_item.html',
+        {**ctx, 'block': block},
+        request=request,
+    )
+    new_form = BlockTextForm(initial={'text': after})
+    new_html = render_to_string(
+        'core/partials/block_edit_form.html',
+        {
+            **ctx,
+            'block': new_block,
+            'form': new_form,
+            'original_text': after,
+            'oob': f'afterend:#block-{block.pk}',
+        },
+        request=request,
+    )
+    return HttpResponse(old_html + new_html)
 
 
 @login_required

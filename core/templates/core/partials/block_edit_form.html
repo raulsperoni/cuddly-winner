@@ -1,6 +1,11 @@
 <div id="block-{{ block.pk }}"
+     data-split-root
+     data-original="{{ original_text|escapejs }}"
+     data-split-url="{% url 'block_split' document.pk block.pk %}"
+     {% if oob %}hx-swap-oob="{{ oob }}"{% endif %}
      class="bg-gray-900 border border-indigo-700 rounded-lg p-5">
-  <form
+
+  <form class="save-form"
     hx-post="{% url 'block_edit' document.pk block.pk %}"
     hx-target="#block-{{ block.pk }}"
     hx-swap="outerHTML">
@@ -8,19 +13,85 @@
     <div class="mb-3">
       {{ form.text }}
     </div>
+    <p class="text-xs text-gray-600 mb-3">
+      Enter splits block &middot; Shift+Enter line break &middot;
+      ⌘Enter saves &middot; Esc cancels
+    </p>
     <div class="flex items-center gap-3">
       <button type="submit"
-              class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white
-                     px-4 py-1.5 rounded transition">
+              class="save-btn text-xs bg-indigo-600 hover:bg-indigo-500
+                     text-white px-4 py-1.5 rounded transition">
         Save
       </button>
       <button type="button"
-              hx-get="{% url 'block_edit' document.pk block.pk %}"
+              class="cancel-btn text-xs text-gray-500 hover:text-gray-300
+                     transition"
+              hx-get="{% url 'block_cancel' document.pk block.pk %}"
               hx-target="#block-{{ block.pk }}"
-              hx-swap="outerHTML"
-              class="text-xs text-gray-500 hover:text-gray-300 transition">
+              hx-swap="outerHTML">
         Cancel
       </button>
     </div>
   </form>
+
+  <script>
+  (function() {
+    var blockId = '{{ block.pk }}';
+    function init() {
+      var w = document.getElementById('block-' + blockId);
+      if (!w) return;
+      var ta = w.querySelector('textarea');
+      if (!ta) return;
+
+      ta.focus();
+
+      ta.addEventListener('keydown', function(e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+          e.preventDefault();
+          w.querySelector('.save-btn').click();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          w.querySelector('.cancel-btn').click();
+        } else if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+          e.preventDefault();
+          var p = ta.selectionStart;
+          splitBlock(w, ta.value.substring(0, p), ta.value.substring(p));
+        }
+      });
+
+      w.addEventListener('focusout', function(e) {
+        var rt = e.relatedTarget;
+        if (!w.contains(rt) && document.contains(w)) {
+          if (ta.value !== w.dataset.original) {
+            w.querySelector('.save-btn').click();
+          }
+        }
+      });
+    }
+
+    function splitBlock(w, before, after) {
+      var form = document.createElement('form');
+      form.setAttribute('hx-post', w.dataset.splitUrl);
+      form.setAttribute('hx-target', '#block-' + blockId);
+      form.setAttribute('hx-swap', 'outerHTML');
+      [['before', before], ['after', after]].forEach(function(pair) {
+        var inp = document.createElement('input');
+        inp.type = 'hidden';
+        inp.name = pair[0];
+        inp.value = pair[1];
+        form.appendChild(inp);
+      });
+      document.body.appendChild(form);
+      htmx.process(form);
+      form.dispatchEvent(new Event('submit', {bubbles: true}));
+      setTimeout(function() {
+        if (form.parentNode) form.parentNode.removeChild(form);
+      }, 100);
+    }
+
+    // Defer to ensure DOM is settled (works for both direct swap and OOB insert)
+    setTimeout(init, 0);
+  })();
+  </script>
+
 </div>

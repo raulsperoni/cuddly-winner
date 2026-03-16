@@ -8,6 +8,11 @@
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <script src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
   <meta name="csrf-token" content="{{ csrf_token }}">
+  <style>
+    .htmx-indicator { display: none; }
+    .htmx-request .htmx-indicator,
+    .htmx-request.htmx-indicator { display: inline-flex; }
+  </style>
   <script>
     document.addEventListener('htmx:configRequest', function(evt) {
       evt.detail.headers['X-CSRFToken'] = document.querySelector(
