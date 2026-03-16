@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "cuddly-winner"
+version = "0.1.0"
+description = "Pull Requests for Prose"
+authors = ["Raul Speroni"]
+packages = []
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = "^5.1"
+gunicorn = "^22.0"
+psycopg2-binary = "^2.9"
+dj-database-url = "^2.3"
+whitenoise = {extras = ["brotli"], version = "^6.8"}
+django-allauth = "^65.3"
+openai = "^1.58"
+requests = "^2.32"
+python-dotenv = "^1.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3"
+pytest-django = "^4.9"
+pytest-cov = "^6.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

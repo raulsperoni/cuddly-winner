@@ -1,0 +1,8 @@
+[run]
+source = core
+omit =
+    */migrations/*
+    */tests/*
+
+[report]
+show_missing = True

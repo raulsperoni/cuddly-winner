@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cuddly_winner
+      POSTGRES_USER: cuddly_winner
+      POSTGRES_PASSWORD: cuddly_winner
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cuddly_winner"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    command: >
+      sh -c "poetry run python manage.py migrate --noinput &&
+             poetry run python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://cuddly_winner:cuddly_winner@db/cuddly_winner
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

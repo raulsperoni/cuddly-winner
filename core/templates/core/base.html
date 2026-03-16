@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-950">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Prose{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <script>
+    document.addEventListener('htmx:configRequest', function(evt) {
+      evt.detail.headers['X-CSRFToken'] = document.querySelector(
+        'meta[name="csrf-token"]'
+      ).getAttribute('content');
+    });
+  </script>
+</head>
+<body class="h-full text-gray-100">
+
+  <nav class="bg-gray-900 border-b border-gray-800 px-4 py-3 flex items-center justify-between">
+    <a href="/" class="text-xl font-bold text-indigo-400 tracking-tight">Prose</a>
+    <div class="flex items-center gap-4 text-sm">
+      {% if user.is_authenticated %}
+        <span class="text-gray-400">{{ user.email }}</span>
+        <a href="{% url 'account_logout' %}"
+           class="text-gray-400 hover:text-white transition">Logout</a>
+      {% else %}
+        <a href="{% url 'account_login' %}"
+           class="text-gray-400 hover:text-white transition">Login</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  {% if messages %}
+    <div class="max-w-4xl mx-auto mt-4 px-4 space-y-2">
+      {% for message in messages %}
+        <div class="px-4 py-2 rounded text-sm
+          {% if message.tags == 'error' %}bg-red-800 text-red-100
+          {% else %}bg-green-800 text-green-100{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <main class="{% block main_class %}max-w-4xl mx-auto px-4 py-8{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+</body>
+</html>

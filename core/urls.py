@@ -1,0 +1,59 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('documents/new/', views.document_create, name='document_create'),
+    path(
+        'documents/<int:pk>/',
+        views.document_detail,
+        name='document_detail',
+    ),
+    path(
+        'documents/<int:pk>/blocks/add/',
+        views.block_add,
+        name='block_add',
+    ),
+    path(
+        'documents/<int:pk>/blocks/<int:block_pk>/edit/',
+        views.block_edit,
+        name='block_edit',
+    ),
+    path(
+        'documents/<int:pk>/blocks/<int:block_pk>/suggest/',
+        views.block_suggest,
+        name='block_suggest',
+    ),
+    path(
+        'documents/<int:pk>/blocks/<int:block_pk>'
+        '/suggestions/<int:suggestion_pk>/accept/',
+        views.suggestion_accept,
+        name='suggestion_accept',
+    ),
+    path(
+        'documents/<int:pk>/blocks/<int:block_pk>'
+        '/suggestions/<int:suggestion_pk>/reject/',
+        views.suggestion_reject,
+        name='suggestion_reject',
+    ),
+    path(
+        'documents/<int:pk>/snapshot/',
+        views.snapshot_create,
+        name='snapshot_create',
+    ),
+    path(
+        'documents/<int:pk>/snapshots/<int:snapshot_pk>/export/',
+        views.snapshot_export,
+        name='snapshot_export',
+    ),
+    path(
+        'documents/<int:pk>/history/',
+        views.document_history,
+        name='document_history',
+    ),
+    path(
+        'p/<uuid:token>/',
+        views.document_public,
+        name='document_public',
+    ),
+]

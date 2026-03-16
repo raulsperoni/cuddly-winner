@@ -1,0 +1,26 @@
+<div id="block-{{ block.pk }}"
+     class="bg-gray-900 border border-indigo-700 rounded-lg p-5">
+  <form
+    hx-post="{% url 'block_edit' document.pk block.pk %}"
+    hx-target="#block-{{ block.pk }}"
+    hx-swap="outerHTML">
+    {% csrf_token %}
+    <div class="mb-3">
+      {{ form.text }}
+    </div>
+    <div class="flex items-center gap-3">
+      <button type="submit"
+              class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white
+                     px-4 py-1.5 rounded transition">
+        Save
+      </button>
+      <button type="button"
+              hx-get="{% url 'block_edit' document.pk block.pk %}"
+              hx-target="#block-{{ block.pk }}"
+              hx-swap="outerHTML"
+              class="text-xs text-gray-500 hover:text-gray-300 transition">
+        Cancel
+      </button>
+    </div>
+  </form>
+</div>

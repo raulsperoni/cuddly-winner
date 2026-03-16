@@ -1,0 +1,92 @@
+{% with current=block.current_version pending=block.pending_suggestions %}
+<div id="block-{{ block.pk }}"
+     class="bg-gray-900 border border-gray-800 rounded-lg p-5 space-y-4">
+
+  <!-- Block content -->
+  <div>
+    {% if current and current.text %}
+      <p class="text-gray-200 leading-relaxed whitespace-pre-wrap">
+        {{ current.text }}
+      </p>
+    {% else %}
+      <p class="text-gray-600 italic text-sm">Empty block — click Edit to add text.</p>
+    {% endif %}
+    <div class="flex items-center gap-2 mt-2">
+      <span class="text-xs text-gray-600">Block #{{ block.position }}</span>
+      {% if current %}
+        <span class="text-xs px-1.5 py-0.5 rounded
+          {% if current.author_type == 'ai' %}
+            bg-purple-900 text-purple-300
+          {% else %}
+            bg-blue-900 text-blue-300
+          {% endif %}">
+          {{ current.get_author_type_display }}
+        </span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="flex items-center gap-3 flex-wrap" x-data="{ suggestOpen: false }">
+    <!-- Edit button -->
+    <button
+      hx-get="{% url 'block_edit' document.pk block.pk %}"
+      hx-target="#block-{{ block.pk }}"
+      hx-swap="outerHTML"
+      class="text-xs text-indigo-400 hover:text-indigo-300 border
+             border-indigo-900 hover:border-indigo-700 rounded px-3 py-1
+             transition">
+      Edit
+    </button>
+
+    <!-- AI Suggest -->
+    <button @click="suggestOpen = !suggestOpen"
+            class="text-xs text-purple-400 hover:text-purple-300 border
+                   border-purple-900 hover:border-purple-700 rounded px-3 py-1
+                   transition">
+      AI Suggest ▾
+    </button>
+
+    <div x-show="suggestOpen" x-cloak
+         class="flex items-center gap-2 flex-wrap">
+      {% for value, label in suggestion_types %}
+        <form
+          hx-post="{% url 'block_suggest' document.pk block.pk %}"
+          hx-target="#block-{{ block.pk }}-suggestions"
+          hx-swap="beforeend">
+          {% csrf_token %}
+          <input type="hidden" name="suggestion_type" value="{{ value }}">
+          <button type="submit"
+                  class="text-xs bg-purple-900 hover:bg-purple-800 text-purple-200
+                         px-2 py-1 rounded transition">
+            {{ label }}
+          </button>
+        </form>
+      {% empty %}
+        {% for value, label in block.suggestions.model.SUGGESTION_TYPE_CHOICES %}
+          <form
+            hx-post="{% url 'block_suggest' document.pk block.pk %}"
+            hx-target="#block-{{ block.pk }}-suggestions"
+            hx-swap="beforeend">
+            {% csrf_token %}
+            <input type="hidden" name="suggestion_type" value="{{ value }}">
+            <button type="submit"
+                    class="text-xs bg-purple-900 hover:bg-purple-800 text-purple-200
+                           px-2 py-1 rounded transition">
+              {{ label }}
+            </button>
+          </form>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Pending suggestions -->
+  <div id="block-{{ block.pk }}-suggestions" class="space-y-3">
+    {% for suggestion in pending %}
+      {% include "core/partials/suggestion_card.html" with suggestion=suggestion block=block document=document %}
+    {% endfor %}
+  </div>
+
+</div>
+{% endwith %}
