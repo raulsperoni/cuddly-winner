@@ -17,9 +17,8 @@
     <div class="mb-8" x-data="{ open: false }">
       <div class="bg-gray-900 border border-gray-800 rounded-lg p-5">
         {% if current %}
-          <p class="text-gray-200 leading-relaxed whitespace-pre-wrap">
-            {{ current.text }}
-          </p>
+          <div class="prose prose-invert prose-sm max-w-none"
+               data-markdown="{{ current.text }}"></div>
         {% else %}
           <p class="text-gray-600 italic">Empty block</p>
         {% endif %}
@@ -49,9 +48,9 @@
                 <span class="text-green-500 font-medium">current</span>
               {% endif %}
             </div>
-            <p class="text-gray-400 line-clamp-3 whitespace-pre-wrap">
-              {{ version.text }}
-            </p>
+            <div class="prose prose-invert prose-sm max-w-none text-gray-400
+                        line-clamp-3"
+                 data-markdown="{{ version.text }}"></div>
             {% for decision in version.decisions.all %}
               <div class="mt-1 text-gray-500">
                 Decision: {{ decision.get_decision_type_display }}

@@ -8,9 +8,8 @@
       {{ suggestion.created_at|timesince }} ago
     </span>
   </div>
-  <p class="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap mb-3">
-    {{ suggestion.text }}
-  </p>
+  <div class="prose prose-invert prose-sm max-w-none text-sm mb-3"
+       data-markdown="{{ suggestion.text }}"></div>
   <div class="flex items-center gap-2">
     <form
       hx-post="{% url 'suggestion_accept' document.pk block.pk suggestion.pk %}"

@@ -5,11 +5,12 @@
   <!-- Block content (click to edit) -->
   <div>
     {% if current and current.text %}
-      <p class="text-gray-200 leading-relaxed whitespace-pre-wrap cursor-text"
-         hx-get="{% url 'block_edit' document.pk block.pk %}"
-         hx-target="#block-{{ block.pk }}"
-         hx-swap="outerHTML"
-         hx-trigger="click">{{ current.text }}</p>
+      <div class="prose prose-invert prose-sm max-w-none cursor-text"
+           data-markdown="{{ current.text }}"
+           hx-get="{% url 'block_edit' document.pk block.pk %}"
+           hx-target="#block-{{ block.pk }}"
+           hx-swap="outerHTML"
+           hx-trigger="click"></div>
     {% else %}
       <p class="text-gray-500 italic text-sm cursor-text"
          hx-get="{% url 'block_edit' document.pk block.pk %}"

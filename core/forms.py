@@ -44,13 +44,7 @@ class DocumentForm(forms.ModelForm):
 
 class BlockTextForm(forms.Form):
     text = forms.CharField(
-        widget=forms.Textarea(attrs={
-            'class': (
-                'w-full bg-gray-800 border border-gray-700 text-gray-100 '
-                'rounded px-3 py-2 font-mono text-sm'
-            ),
-            'rows': 5,
-        }),
+        widget=forms.HiddenInput(),
         required=False,
     )
 

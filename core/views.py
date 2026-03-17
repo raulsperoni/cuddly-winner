@@ -33,6 +33,7 @@ def document_create(request):
             doc.created_by = request.user
             doc.save()
             raw = form.cleaned_data.get('initial_content', '').strip()
+            raw = raw.replace('\r\n', '\n').replace('\r', '\n')
             paragraphs = (
                 [p.strip() for p in raw.split('\n\n') if p.strip()]
                 if raw else ['']

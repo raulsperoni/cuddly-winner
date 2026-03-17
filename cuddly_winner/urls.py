@@ -6,5 +6,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('health/', lambda r: HttpResponse('ok')),
+    path('api/v1/', include('core.api.urls')),
     path('', include('core.urls')),
 ]

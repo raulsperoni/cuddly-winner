@@ -1,6 +1,6 @@
 <div id="block-{{ block.pk }}"
      data-split-root
-     data-original="{{ original_text|escapejs }}"
+     data-original="{{ original_text }}"
      data-split-url="{% url 'block_split' document.pk block.pk %}"
      {% if oob %}hx-swap-oob="{{ oob }}"{% endif %}
      class="bg-gray-900 border border-indigo-700 rounded-lg p-5">
@@ -11,11 +11,46 @@
     hx-swap="outerHTML">
     {% csrf_token %}
     <div class="mb-3">
+      <div id="toolbar-{{ block.pk }}"
+           class="flex items-center gap-1 bg-gray-800 border border-gray-700
+                  border-b-0 rounded-t px-2 py-1 flex-wrap">
+        <button type="button" data-cmd="toggleBold"
+                class="toolbar-btn px-2 py-0.5 rounded text-xs font-bold
+                       text-gray-300 hover:bg-gray-700 hover:text-white
+                       transition" title="Bold (⌘B)">B</button>
+        <button type="button" data-cmd="toggleItalic"
+                class="toolbar-btn px-2 py-0.5 rounded text-xs italic
+                       text-gray-300 hover:bg-gray-700 hover:text-white
+                       transition" title="Italic (⌘I)">I</button>
+        <span class="text-gray-700 text-xs">|</span>
+        <button type="button" data-cmd="toggleHeading" data-level="1"
+                class="toolbar-btn px-2 py-0.5 rounded text-xs
+                       text-gray-300 hover:bg-gray-700 hover:text-white
+                       transition" title="Heading 1">H1</button>
+        <button type="button" data-cmd="toggleHeading" data-level="2"
+                class="toolbar-btn px-2 py-0.5 rounded text-xs
+                       text-gray-300 hover:bg-gray-700 hover:text-white
+                       transition" title="Heading 2">H2</button>
+        <span class="text-gray-700 text-xs">|</span>
+        <button type="button" data-cmd="toggleBulletList"
+                class="toolbar-btn px-2 py-0.5 rounded text-xs
+                       text-gray-300 hover:bg-gray-700 hover:text-white
+                       transition" title="Bullet list">• List</button>
+        <button type="button" data-cmd="toggleOrderedList"
+                class="toolbar-btn px-2 py-0.5 rounded text-xs
+                       text-gray-300 hover:bg-gray-700 hover:text-white
+                       transition" title="Ordered list">1. List</button>
+      </div>
+      <div id="editor-{{ block.pk }}"
+           class="w-full min-h-[7rem] bg-gray-800 border border-gray-700
+                  rounded-b text-gray-100 px-3 py-2 text-sm
+                  prose prose-invert prose-sm max-w-none
+                  focus-within:border-indigo-500 outline-none">
+      </div>
       {{ form.text }}
     </div>
     <p class="text-xs text-gray-600 mb-3">
-      Enter splits block &middot; Shift+Enter line break &middot;
-      ⌘Enter saves &middot; Esc cancels
+      Enter splits block &middot; ⌘Enter saves &middot; Esc cancels
     </p>
     <div class="flex items-center gap-3">
       <button type="submit"
@@ -37,32 +72,100 @@
   <script>
   (function() {
     var blockId = '{{ block.pk }}';
+
     function init() {
+      if (!window.Prose) {
+        setTimeout(init, 50);
+        return;
+      }
       var w = document.getElementById('block-' + blockId);
       if (!w) return;
-      var ta = w.querySelector('textarea');
-      if (!ta) return;
+      var editorEl = document.getElementById('editor-' + blockId);
+      var hiddenInput = w.querySelector('input[name="text"]');
+      if (!editorEl || !hiddenInput) return;
 
-      ta.focus();
+      var editor = new window.Prose.Editor({
+        element: editorEl,
+        extensions: [
+          window.Prose.StarterKit,
+          window.Prose.Markdown,
+        ],
+        content: w.dataset.original || '',
+        autofocus: true,
+        onUpdate: function() {
+          hiddenInput.value = editor.storage.markdown.getMarkdown();
+        },
+      });
 
-      ta.addEventListener('keydown', function(e) {
+      // Seed hidden input with initial markdown
+      hiddenInput.value = editor.storage.markdown.getMarkdown();
+
+      // Toolbar buttons
+      var toolbar = document.getElementById('toolbar-' + blockId);
+      if (toolbar) {
+        toolbar.querySelectorAll('.toolbar-btn').forEach(function(btn) {
+          btn.addEventListener('mousedown', function(e) {
+            e.preventDefault(); // keep editor focus
+            var cmd = btn.dataset.cmd;
+            var level = btn.dataset.level
+              ? parseInt(btn.dataset.level) : undefined;
+            var chain = editor.chain().focus();
+            if (level !== undefined) {
+              chain[cmd]({ level: level }).run();
+            } else {
+              chain[cmd]().run();
+            }
+          });
+        });
+
+        // Active state on selection change
+        editor.on('selectionUpdate', updateToolbar);
+        editor.on('transaction', updateToolbar);
+        function updateToolbar() {
+          toolbar.querySelectorAll('.toolbar-btn').forEach(function(btn) {
+            var cmd = btn.dataset.cmd;
+            var level = btn.dataset.level
+              ? parseInt(btn.dataset.level) : undefined;
+            var active = false;
+            if (cmd === 'toggleBold') active = editor.isActive('bold');
+            else if (cmd === 'toggleItalic') active = editor.isActive('italic');
+            else if (cmd === 'toggleHeading')
+              active = editor.isActive('heading', { level: level });
+            else if (cmd === 'toggleBulletList')
+              active = editor.isActive('bulletList');
+            else if (cmd === 'toggleOrderedList')
+              active = editor.isActive('orderedList');
+            btn.classList.toggle('bg-gray-600', active);
+            btn.classList.toggle('text-white', active);
+          });
+        }
+      }
+
+      editor.view.dom.addEventListener('keydown', function(e) {
         if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
           e.preventDefault();
           w.querySelector('.save-btn').click();
         } else if (e.key === 'Escape') {
           e.preventDefault();
           w.querySelector('.cancel-btn').click();
-        } else if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+        } else if (
+          e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey
+        ) {
           e.preventDefault();
-          var p = ta.selectionStart;
-          splitBlock(w, ta.value.substring(0, p), ta.value.substring(p));
+          var state = editor.state;
+          var sel = state.selection;
+          var doc = state.doc;
+          var before = doc.textBetween(0, sel.from, '\n');
+          var after = doc.textBetween(sel.to, doc.content.size, '\n');
+          splitBlock(w, before, after);
         }
       });
 
       w.addEventListener('focusout', function(e) {
         var rt = e.relatedTarget;
         if (!w.contains(rt) && document.contains(w)) {
-          if (ta.value !== w.dataset.original) {
+          var current = editor.storage.markdown.getMarkdown();
+          if (current !== w.dataset.original) {
             w.querySelector('.save-btn').click();
           }
         }
@@ -89,7 +192,6 @@
       }, 100);
     }
 
-    // Defer to ensure DOM is settled (works for both direct swap and OOB insert)
     setTimeout(init, 0);
   })();
   </script>

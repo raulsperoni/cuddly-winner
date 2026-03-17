@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Prose{% endblock %}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <script src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
   <meta name="csrf-token" content="{{ csrf_token }}">
@@ -12,12 +12,55 @@
     .htmx-indicator { display: none; }
     .htmx-request .htmx-indicator,
     .htmx-request.htmx-indicator { display: inline-flex; }
+    .ProseMirror { outline: none; min-height: 5rem; }
+    .ProseMirror p.is-editor-empty:first-child::before {
+      content: attr(data-placeholder);
+      color: #6b7280;
+      pointer-events: none;
+      float: left;
+      height: 0;
+    }
   </style>
   <script>
     document.addEventListener('htmx:configRequest', function(evt) {
       evt.detail.headers['X-CSRFToken'] = document.querySelector(
         'meta[name="csrf-token"]'
       ).getAttribute('content');
+    });
+  </script>
+  <script type="importmap">
+  {
+    "imports": {
+      "@tiptap/core": "https://esm.sh/@tiptap/core@3.20.4",
+      "@tiptap/starter-kit": "https://esm.sh/@tiptap/starter-kit@3.20.4?deps=@tiptap/core@3.20.4",
+      "tiptap-markdown": "https://esm.sh/tiptap-markdown@0.9.0?deps=@tiptap/core@3.20.4",
+      "marked": "https://esm.sh/marked@12.0.0"
+    }
+  }
+  </script>
+  <script type="module">
+    import { Editor } from '@tiptap/core';
+    import StarterKit from '@tiptap/starter-kit';
+    import { Markdown } from 'tiptap-markdown';
+    import { marked } from 'marked';
+
+    window.Prose = {
+      Editor,
+      StarterKit,
+      Markdown,
+      markedParse: marked.parse.bind(marked),
+    };
+
+    function renderMarkdownElements(root) {
+      (root || document).querySelectorAll('[data-markdown]').forEach(function(el) {
+        el.innerHTML = window.Prose.markedParse(el.dataset.markdown || '');
+      });
+    }
+
+    renderMarkdownElements();
+
+    document.addEventListener('htmx:afterSwap', function(evt) {
+      renderMarkdownElements(evt.detail.target);
     });
   </script>
 </head>

@@ -515,6 +515,21 @@ socialaccount = ["oauthlib (>=3.3.0,<4)", "pyjwt[crypto] (>=2.0,<3)", "requests 
 steam = ["python3-openid (>=3.0.8,<4)"]
 
 [[package]]
+name = "djangorestframework"
+version = "3.16.1"
+description = "Web APIs for Django, made easy."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "djangorestframework-3.16.1-py3-none-any.whl", hash = "sha256:33a59f47fb9c85ede792cbf88bde71893bcda0667bc573f784649521f1102cec"},
+    {file = "djangorestframework-3.16.1.tar.gz", hash = "sha256:166809528b1aced0a17dc66c24492af18049f2c9420dbd0be29422029cfc3ff7"},
+]
+
+[package.dependencies]
+django = ">=4.2"
+
+[[package]]
 name = "gunicorn"
 version = "22.0.0"
 description = "WSGI HTTP Server for UNIX"
@@ -1249,4 +1264,4 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "dcc63d38286e1739c9c03ee6e3510e933b8470402a349cea1eb7ee12ea67a0b6"
+content-hash = "41ae09d1f986b981cdd1e2a18c67895e1bdbb288c84c1bd7263489defe970689"

@@ -43,9 +43,10 @@ def get_suggestion(block, suggestion_type: str) -> str:
             'content': (
                 'You are a professional editor helping draft policy '
                 'and political documents. Respond with a JSON object '
-                'containing two fields: "text" (the revised paragraph, '
-                'plain prose only — no markdown, no bullet points) and '
-                '"notes" (brief summary of changes made).'
+                'containing two fields: "text" (the revised paragraph; '
+                'you may use **bold**, *italic*, and simple lists where '
+                'appropriate, but prefer prose; no headings, no HTML) '
+                'and "notes" (brief summary of changes made).'
             ),
         },
         {
@@ -74,8 +75,9 @@ def get_suggestion(block, suggestion_type: str) -> str:
                     'content': (
                         'You are a professional editor helping draft policy '
                         'and political documents. Return only the revised '
-                        'paragraph text — plain prose, no markdown, '
-                        'no bullet points, no explanations.'
+                        'paragraph text — you may use **bold**, *italic*, '
+                        'and simple lists where appropriate, but prefer '
+                        'prose; no headings, no HTML, no explanations.'
                     ),
                 },
                 messages[1],
