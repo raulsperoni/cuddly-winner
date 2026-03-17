@@ -49,11 +49,14 @@ export function DiffView({ original, modified }: Props) {
   const diffs = useMemo(() => wordDiff(original, modified), [original, modified])
 
   return (
-    <div className="prose-font text-[15px] leading-relaxed text-zinc-300">
+    <div className="prose-font text-[15px] leading-relaxed [color:var(--text-main)]">
       {diffs.map(([op, text], i) => {
         if (op === 1) {
           return (
-            <span key={i} className="bg-green-900/50 text-green-300 rounded-sm">
+            <span
+              key={i}
+              className="rounded-sm [background:var(--success-soft)] [color:var(--success)]"
+            >
               {text}
             </span>
           )
@@ -62,7 +65,7 @@ export function DiffView({ original, modified }: Props) {
           return (
             <span
               key={i}
-              className="bg-red-900/40 text-red-400 line-through opacity-70 rounded-sm"
+              className="line-through opacity-70 rounded-sm [background:var(--danger-soft)] [color:var(--danger)]"
             >
               {text}
             </span>

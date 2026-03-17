@@ -8,45 +8,102 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap"
       rel="stylesheet"
     />
     <style>
       *, *::before, *::after { box-sizing: border-box; }
+      :root {
+        --app-bg: #09090b;
+        --app-bg-soft: #111118;
+        --surface-1: rgba(24, 24, 27, 0.9);
+        --surface-2: rgba(39, 39, 42, 0.45);
+        --surface-3: rgba(63, 63, 70, 0.18);
+        --surface-elevated: rgba(16, 16, 19, 0.95);
+        --text-main: #ece9e4;
+        --text-strong: #f7f4ef;
+        --text-muted: #a1a1aa;
+        --text-subtle: #71717a;
+        --border-subtle: rgba(82, 82, 91, 0.32);
+        --border-strong: rgba(113, 113, 122, 0.45);
+        --accent: #d4a652;
+        --accent-soft: rgba(212, 166, 82, 0.12);
+        --success: #5ea890;
+        --success-soft: rgba(94, 168, 144, 0.12);
+        --danger: #b65f5f;
+        --danger-soft: rgba(182, 95, 95, 0.12);
+        --link: #d7d0c2;
+      }
+      html[data-theme="light"] {
+        --app-bg: #f6f0e7;
+        --app-bg-soft: #fbf7f0;
+        --surface-1: rgba(255, 252, 248, 0.92);
+        --surface-2: rgba(240, 233, 223, 0.85);
+        --surface-3: rgba(223, 213, 199, 0.58);
+        --surface-elevated: rgba(255, 252, 248, 0.97);
+        --text-main: #2f2923;
+        --text-strong: #171311;
+        --text-muted: #665d56;
+        --text-subtle: #8f847a;
+        --border-subtle: rgba(118, 103, 90, 0.18);
+        --border-strong: rgba(118, 103, 90, 0.32);
+        --accent: #9b6c16;
+        --accent-soft: rgba(155, 108, 22, 0.1);
+        --success: #2f7f64;
+        --success-soft: rgba(47, 127, 100, 0.1);
+        --danger: #9d4444;
+        --danger-soft: rgba(157, 68, 68, 0.1);
+        --link: #433a32;
+      }
       body {
         margin: 0;
-        font-family: 'IBM Plex Mono', monospace;
-        background: #09090b;
-        color: #e4e4e7;
+        font-family: 'IBM Plex Sans', sans-serif;
+        background: var(--app-bg);
+        color: var(--text-main);
         -webkit-font-smoothing: antialiased;
+        transition: background-color 160ms ease, color 160ms ease;
       }
       .prose-font { font-family: 'Lora', serif; }
       .tiptap { outline: none; min-height: 1.5em; }
       .tiptap p { margin: 0 0 0.75em; }
       .tiptap p:last-child { margin-bottom: 0; }
-      .tiptap strong { color: #f4f4f5; font-weight: 600; }
-      .tiptap em { color: #d4d4d8; font-style: italic; }
+      .tiptap strong { color: var(--text-strong); font-weight: 600; }
+      .tiptap em { color: var(--text-main); font-style: italic; }
       .tiptap ul, .tiptap ol { margin: 0 0 0.75em 1.5em; }
       .tiptap li { margin-bottom: 0.25em; }
       .tiptap h1, .tiptap h2, .tiptap h3 {
         font-family: 'IBM Plex Mono', monospace;
         font-weight: 500;
         margin: 0 0 0.5em;
+        color: var(--text-strong);
       }
       .tiptap code {
         font-family: 'IBM Plex Mono', monospace;
         font-size: 0.875em;
-        background: rgba(255,255,255,0.06);
+        background: var(--surface-2);
         padding: 0.1em 0.3em;
         border-radius: 3px;
       }
       .tiptap blockquote {
-        border-left: 2px solid #52525b;
+        border-left: 2px solid var(--border-strong);
         padding-left: 1em;
         margin: 0 0 0.75em;
-        color: #a1a1aa;
+        color: var(--text-muted);
       }
     </style>
+    <script>
+      (() => {
+        const stored = window.localStorage.getItem('cw-theme')
+        const theme = stored || 'dark'
+        document.documentElement.dataset.theme = theme
+        window.__cwTheme = theme
+        window.__setCwTheme = (nextTheme) => {
+          document.documentElement.dataset.theme = nextTheme
+          window.localStorage.setItem('cw-theme', nextTheme)
+          window.__cwTheme = nextTheme
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

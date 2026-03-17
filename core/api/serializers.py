@@ -14,16 +14,25 @@ from core.models import (
 
 class BlockVersionSerializer(serializers.ModelSerializer):
     author_username = serializers.SerializerMethodField()
+    decision = serializers.SerializerMethodField()
 
     class Meta:
         model = BlockVersion
         fields = [
             'id', 'text', 'author_type', 'author_username',
-            'based_on_version_id', 'is_current', 'created_at',
+            'based_on_version_id', 'is_current', 'created_at', 'decision',
         ]
 
     def get_author_username(self, obj):
         return obj.author.username if obj.author else None
+
+    def get_decision(self, obj):
+        decision = obj.decisions.select_related('decided_by').order_by(
+            '-created_at'
+        ).first()
+        if decision:
+            return DecisionSerializer(decision).data
+        return None
 
 
 class DecisionSerializer(serializers.ModelSerializer):

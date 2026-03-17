@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Member } from '../../api/types'
 
@@ -15,6 +15,13 @@ interface Props {
   title?: string
   actions?: React.ReactNode
   share?: ShareProps
+}
+
+declare global {
+  interface Window {
+    __cwTheme?: string
+    __setCwTheme?: (theme: string) => void
+  }
 }
 
 function buildAbsoluteUrl(path: string): string {
@@ -40,20 +47,20 @@ function CopyField({
 
   return (
     <div className="space-y-2">
-      <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-zinc-500">
+      <div className="text-[11px] font-mono uppercase tracking-[0.2em] [color:var(--text-subtle)]">
         {label}
       </div>
-      <div className="rounded border border-zinc-800/70 bg-zinc-950/80 p-2">
-        <div className="break-all text-xs font-mono text-zinc-300">{value}</div>
+      <div className="rounded-xl border p-3 [border-color:var(--border-subtle)] [background:var(--app-bg-soft)]">
+        <div className="break-all text-xs font-mono [color:var(--text-main)]">{value}</div>
         <div className="mt-2 flex items-center justify-between gap-3">
           {note ? (
-            <div className="text-[11px] font-mono text-zinc-600">{note}</div>
+            <div className="text-[11px] font-mono [color:var(--text-subtle)]">{note}</div>
           ) : (
             <span />
           )}
           <button
             onClick={handleCopy}
-            className="px-2 py-1 text-[11px] font-mono rounded-sm border border-zinc-700/60 text-zinc-300 hover:border-zinc-600 hover:text-white transition-colors"
+            className="px-2 py-1 text-[11px] font-mono rounded-sm border transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
           >
             {copied ? 'Copied' : 'Copy'}
           </button>
@@ -87,21 +94,21 @@ function MemberList({
   }
 
   return (
-    <div className="space-y-2 border-t border-zinc-800/70 pt-3">
-      <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-zinc-500">
+    <div className="space-y-2 border-t pt-3 [border-color:var(--border-subtle)]">
+      <div className="text-[11px] font-mono uppercase tracking-[0.2em] [color:var(--text-subtle)]">
         Collaborators
       </div>
       <div className="space-y-2">
         {members.map((member) => (
           <div
             key={member.user_id}
-            className="flex items-center justify-between gap-3 rounded border border-zinc-800/60 bg-zinc-950/60 px-2 py-2"
+            className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2 [border-color:var(--border-subtle)] [background:var(--app-bg-soft)]"
           >
             <div className="flex items-center gap-2 min-w-0">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-700/70 bg-zinc-900 text-[11px] font-mono text-zinc-300">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full border text-[11px] font-mono [border-color:var(--border-subtle)] [background:var(--surface-2)] [color:var(--text-main)]">
                 {member.username.slice(0, 1).toUpperCase()}
               </span>
-              <span className="truncate text-xs font-mono text-zinc-300">
+              <span className="truncate text-xs font-mono [color:var(--text-main)]">
                 {member.username}
               </span>
             </div>
@@ -109,7 +116,7 @@ function MemberList({
               <button
                 onClick={() => handleRemove(member.user_id)}
                 disabled={removingUserId === member.user_id}
-                className="text-[11px] font-mono text-zinc-500 hover:text-red-400 transition-colors disabled:opacity-50"
+                className="text-[11px] font-mono transition-colors disabled:opacity-50 [color:var(--text-subtle)] hover:[color:var(--danger)]"
               >
                 {removingUserId === member.user_id ? '…' : 'Remove'}
               </button>
@@ -126,17 +133,17 @@ function SharePopover({ share }: { share: ShareProps }) {
   const inviteLink = buildAbsoluteUrl(share.invitePath)
 
   return (
-    <div className="absolute right-0 top-full z-30 mt-2 w-[24rem] max-w-[calc(100vw-2rem)] rounded-md border border-zinc-800/80 bg-zinc-900/95 p-3 shadow-2xl shadow-black/40 backdrop-blur">
+    <div className="absolute right-0 top-full z-30 mt-3 w-[28rem] max-w-[calc(100vw-2rem)] rounded-2xl border p-4 shadow-2xl backdrop-blur [border-color:var(--border-subtle)] [background:var(--surface-elevated)]">
       <div className="space-y-3">
         <CopyField
-          label="Read-only link"
+          label="Reading link"
           value={readOnlyLink}
-          note="Anyone with this link can read."
+          note="Use this for review, circulation, or public access to the current draft."
         />
         <CopyField
-          label="Invite to collaborate"
+          label="Editing invite"
           value={inviteLink}
-          note="Anyone with this link can join as a collaborator."
+          note="Signed-in recipients can join the drafting team and propose revisions."
         />
         <MemberList
           members={share.members ?? []}
@@ -150,46 +157,68 @@ function SharePopover({ share }: { share: ShareProps }) {
 
 export function NavBar({ back, title, actions, share }: Props) {
   const [shareOpen, setShareOpen] = useState(false)
+  const [theme, setTheme] = useState<'light' | 'dark'>(
+    (window.__cwTheme as 'light' | 'dark' | undefined) ?? 'dark',
+  )
   const username =
     (window as typeof window & { CURRENT_USER?: { username: string } })
       .CURRENT_USER?.username ?? ''
 
+  useEffect(() => {
+    const current = (window.__cwTheme as 'light' | 'dark' | undefined) ?? 'dark'
+    setTheme(current)
+  }, [])
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    window.__setCwTheme?.(next)
+    setTheme(next)
+  }
+
   return (
-    <header className="sticky top-0 z-20 border-b border-zinc-800/60 bg-zinc-950/90 backdrop-blur-sm">
-      <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4 min-w-0">
+    <header className="sticky top-0 z-20 border-b backdrop-blur-sm bg-[var(--surface-elevated)] [border-color:var(--border-subtle)]">
+      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-6 py-4 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
+        <div className="flex items-start gap-4 min-w-0">
           {back ? (
             <Link
               to={back.to}
-              className="text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors flex-shrink-0"
+              className="pt-1 text-xs font-mono transition-colors flex-shrink-0 [color:var(--text-subtle)] hover:[color:var(--text-main)]"
             >
               ← {back.label}
             </Link>
           ) : (
             <Link
               to="/"
-              className="text-xs font-mono text-zinc-400 hover:text-zinc-200 transition-colors flex-shrink-0"
+              className="pt-1 text-xs font-mono transition-colors flex-shrink-0 [color:var(--text-muted)] hover:[color:var(--text-main)]"
             >
               cuddly-winner
             </Link>
           )}
-          {title && (
-            <>
-              <span className="text-zinc-800">|</span>
-              <span className="text-sm font-mono text-zinc-200 truncate">
+          <div className="min-w-0">
+            <div className="text-[11px] font-mono uppercase tracking-[0.25em] [color:var(--text-subtle)]">
+              Accountable drafting
+            </div>
+            {title ? (
+              <div className="mt-1 text-lg prose-font truncate [color:var(--text-strong)]">
                 {title}
-              </span>
-            </>
-          )}
+              </div>
+            ) : null}
+          </div>
         </div>
 
-        <div className="flex items-center gap-4 flex-shrink-0">
+        <div className="flex flex-wrap items-center gap-3 pt-1 lg:flex-shrink-0 lg:justify-end">
+          <button
+            onClick={toggleTheme}
+            className="rounded-xl border px-3 py-2 text-[11px] font-mono uppercase tracking-[0.2em] transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
+          >
+            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          </button>
           {actions}
           {share ? (
             <div className="relative">
               <button
                 onClick={() => setShareOpen((open) => !open)}
-                className="text-xs font-mono text-zinc-500 hover:text-zinc-200 transition-colors"
+                className="rounded-xl border px-3 py-2 text-[11px] font-mono uppercase tracking-[0.2em] transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
               >
                 Share
               </button>
@@ -197,13 +226,13 @@ export function NavBar({ back, title, actions, share }: Props) {
             </div>
           ) : null}
           {username && (
-            <span className="text-xs font-mono text-zinc-600">{username}</span>
+            <span className="text-xs font-mono [color:var(--text-subtle)]">{username}</span>
           )}
           <a
             href="/accounts/logout/"
-            className="text-xs font-mono text-zinc-600 hover:text-zinc-400 transition-colors"
+            className="text-xs font-mono uppercase tracking-[0.15em] transition-colors [color:var(--text-subtle)] hover:[color:var(--text-main)]"
           >
-            logout
+            Sign out
           </a>
         </div>
       </div>

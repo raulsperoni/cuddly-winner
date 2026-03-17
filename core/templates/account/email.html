@@ -1,0 +1,92 @@
+{% extends "account/base_auth.html" %}
+
+{% block title %}Email Addresses{% endblock %}
+{% block eyebrow %}Account settings{% endblock %}
+{% block heading %}Manage the email addresses tied to your drafting account.{% endblock %}
+{% block intro %}Your email address is used for account recovery and, when enabled, verification of collaboration access. Keep it current and secure.{% endblock %}
+{% block panel %}
+  <div class="mono-font text-[11px] uppercase tracking-[0.25em] [color:var(--text-subtle)]">Email addresses</div>
+
+  {% if form.non_field_errors %}
+    <div class="mt-6 rounded-xl px-4 py-3 text-sm [color:var(--danger)] [border:1px_solid_var(--danger-soft)] [background:var(--danger-soft)]">
+      {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+    </div>
+  {% endif %}
+
+  {% if emailaddresses %}
+    <form method="post" action="{% url 'account_email' %}" class="mt-6 space-y-4">
+      {% csrf_token %}
+      {% for radio in emailaddress_radios %}
+        {% with emailaddress=radio.emailaddress %}
+          <label class="flex items-start gap-3 rounded-2xl border px-4 py-3 [border-color:var(--border-subtle)] [background:var(--app-bg-soft)]">
+            <input
+              type="radio"
+              name="email"
+              value="{{ emailaddress.email }}"
+              id="{{ radio.id }}"
+              {% if radio.checked %}checked{% endif %}
+              class="mt-1"
+            />
+            <span class="min-w-0">
+              <span class="block text-sm [color:var(--text-main)]">{{ emailaddress.email }}</span>
+              <span class="mono-font mt-1 block text-[11px] uppercase tracking-[0.2em]">
+                {% if emailaddress.verified %}
+                  <span class="[color:var(--success)]">Verified</span>
+                {% else %}
+                  <span class="[color:var(--accent)]">Unverified</span>
+                {% endif %}
+                {% if emailaddress.primary %}
+                  <span class="ml-2 [color:var(--text-subtle)]">Primary</span>
+                {% endif %}
+              </span>
+            </span>
+          </label>
+        {% endwith %}
+      {% endfor %}
+
+      <div class="flex flex-wrap gap-3">
+        <button type="submit" name="action_primary" class="mono-font rounded-xl px-4 py-3 text-xs uppercase tracking-[0.2em] text-white transition hover:opacity-90 [background:var(--text-main)]">
+          Make primary
+        </button>
+        <button type="submit" name="action_send" class="mono-font rounded-xl border px-4 py-3 text-xs uppercase tracking-[0.2em] transition [border-color:var(--border-subtle)] [color:var(--text-main)] hover:[border-color:var(--border-strong)]">
+          Re-send verification
+        </button>
+        <button type="submit" name="action_remove" class="mono-font px-4 py-3 text-xs uppercase tracking-[0.2em] transition [color:var(--danger)] hover:opacity-80">
+          Remove
+        </button>
+      </div>
+    </form>
+  {% else %}
+    <p class="mt-6 text-sm leading-7 [color:var(--text-muted)]">No email addresses are associated with this account yet.</p>
+  {% endif %}
+
+  {% if can_add_email %}
+    <form method="post" action="{% url 'account_email' %}" class="mt-8 space-y-5">
+      {% csrf_token %}
+      <div class="mono-font text-[11px] uppercase tracking-[0.25em] [color:var(--text-subtle)]">Add email</div>
+      {% for field in form %}
+        {% if field.name == 'email' %}
+          <div>
+            <label for="{{ field.id_for_label }}" class="mono-font mb-2 block text-[11px] uppercase tracking-[0.2em] [color:var(--text-subtle)]">
+              {{ field.label }}
+            </label>
+            <input
+              type="{% if field.field.widget.input_type %}{{ field.field.widget.input_type }}{% else %}email{% endif %}"
+              name="{{ field.html_name }}"
+              id="{{ field.id_for_label }}"
+              value="{% if field.value %}{{ field.value }}{% endif %}"
+              {% if field.field.required %}required{% endif %}
+              class="w-full rounded-xl border px-4 py-3 text-sm [border-color:var(--border-subtle)] [background:var(--app-bg-soft)] [color:var(--text-main)] focus:[border-color:var(--border-strong)] focus:outline-none"
+            />
+            {% if field.errors %}
+              <p class="mt-2 text-sm [color:var(--danger)]">{{ field.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+      <button type="submit" name="action_add" class="mono-font rounded-xl border px-4 py-3 text-xs uppercase tracking-[0.2em] transition [border-color:var(--border-subtle)] [color:var(--text-main)] hover:[border-color:var(--border-strong)]">
+        Add email address
+      </button>
+    </form>
+  {% endif %}
+{% endblock %}

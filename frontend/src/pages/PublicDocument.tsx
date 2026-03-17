@@ -26,32 +26,36 @@ function PublicBlockView({ block }: { block: PublicBlock }) {
   }, [editor, content])
 
   return (
-    <div className="rounded-md border border-zinc-800/60 bg-zinc-900/40 px-5 py-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-zinc-600">
-          Block {block.position + 1}
+    <article className="grid grid-cols-[3rem_minmax(0,1fr)] gap-3 md:grid-cols-[3.5rem_minmax(0,1fr)] md:gap-4">
+      <div className="pt-1 text-right">
+        <span className="text-[11px] font-mono uppercase tracking-[0.2em] [color:var(--text-subtle)]">
+          ¶ {block.position + 1}
         </span>
-        {block.current_version ? (
-          <span
-            className={`px-1.5 py-0.5 text-[10px] font-mono rounded-sm border ${
-              block.current_version.author_type === 'ai'
-                ? 'border-amber-800/50 text-amber-400'
-                : 'border-zinc-700/50 text-zinc-500'
-            }`}
-          >
-            {block.current_version.author_type}
-          </span>
-        ) : null}
       </div>
-      {block.current_version ? (
-        <EditorContent
-          editor={editor}
-          className="prose-font text-[15px] leading-relaxed text-zinc-300"
-        />
-      ) : (
-        <p className="prose-font text-[15px] italic text-zinc-600">Empty block</p>
-      )}
-    </div>
+      <div>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          {block.current_version ? (
+            <span
+              className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-mono ${
+                block.current_version.author_type === 'ai'
+                  ? '[border-color:var(--accent)] [background:var(--accent-soft)] [color:var(--accent)]'
+                  : '[border-color:var(--border-subtle)] [background:var(--surface-1)] [color:var(--text-muted)]'
+              }`}
+            >
+              {block.current_version.author_type === 'ai' ? 'Approved AI draft' : 'Human draft'}
+            </span>
+          ) : null}
+        </div>
+        {block.current_version ? (
+          <EditorContent
+            editor={editor}
+            className="prose-font text-[20px] leading-[1.95] [color:var(--text-main)]"
+          />
+        ) : (
+          <p className="prose-font text-[20px] italic [color:var(--text-subtle)]">Empty paragraph</p>
+        )}
+      </div>
+    </article>
   )
 }
 
@@ -71,54 +75,57 @@ export function PublicDocument() {
   }, [token])
 
   return (
-    <div className="min-h-screen bg-zinc-950">
-      <header className="border-b border-zinc-800/60 bg-zinc-950/90 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-          <div>
-            <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-zinc-500">
-              Public read-only document
+    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-main)]">
+      <header className="border-b backdrop-blur-sm [border-color:var(--border-subtle)] [background:var(--surface-elevated)]">
+        <div className="mx-auto flex max-w-5xl items-start justify-between gap-4 px-6 py-5">
+          <div className="max-w-2xl">
+            <div className="text-[11px] font-mono uppercase tracking-[0.2em] [color:var(--text-subtle)]">
+              Shared drafting copy
             </div>
             {document ? (
-              <h1 className="mt-2 text-lg font-mono text-zinc-100">{document.title}</h1>
+              <h1 className="mt-2 text-3xl prose-font leading-tight [color:var(--text-strong)]">{document.title}</h1>
             ) : (
-              <h1 className="mt-2 text-lg font-mono text-zinc-100">Shared document</h1>
+              <h1 className="mt-2 text-3xl prose-font leading-tight [color:var(--text-strong)]">Shared document</h1>
             )}
+            <p className="mt-3 max-w-xl text-sm leading-7 [color:var(--text-muted)]">
+              This link is for reading and circulation. Sign in to join the drafting team when you have an editing invite.
+            </p>
           </div>
           <a
             href="/accounts/login/"
-            className="text-xs font-mono text-zinc-500 hover:text-zinc-200 transition-colors"
+            className="rounded-xl border px-3 py-2 text-[11px] font-mono uppercase tracking-[0.2em] transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
           >
-            Login
+            Sign in
           </a>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-10">
+      <main className="mx-auto max-w-5xl px-6 py-10">
         {loading ? (
-          <p className="text-sm font-mono text-zinc-600 animate-pulse">Loading…</p>
+          <p className="text-sm font-mono animate-pulse [color:var(--text-subtle)]">Loading…</p>
         ) : null}
 
         {error ? (
-          <div className="rounded border border-red-800/40 bg-red-950/20 p-4 text-sm font-mono text-red-400">
+          <div className="rounded-xl p-4 text-sm font-mono [color:var(--danger)] [border:1px_solid_var(--danger-soft)] [background:var(--danger-soft)]">
             Failed to load public document: {error}
           </div>
         ) : null}
 
         {document ? (
-          <div className="space-y-6">
+          <div className="rounded-[2rem] border px-6 py-8 md:px-10 md:py-12 [border-color:var(--border-subtle)] [background:var(--surface-1)]">
             {document.description ? (
-              <p className="prose-font text-sm leading-relaxed text-zinc-500">
+              <p className="mx-auto max-w-3xl prose-font text-lg leading-8 [color:var(--text-muted)]">
                 {document.description}
               </p>
             ) : null}
             {document.blocks.length > 0 ? (
-              <div className="space-y-3">
+              <div className="mx-auto mt-8 max-w-3xl space-y-10">
                 {document.blocks.map((block) => (
                   <PublicBlockView key={block.id} block={block} />
                 ))}
               </div>
             ) : (
-              <p className="text-sm font-mono text-zinc-600">No content yet.</p>
+              <p className="mt-6 text-sm font-mono [color:var(--text-subtle)]">No paragraphs yet.</p>
             )}
           </div>
         ) : null}

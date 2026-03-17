@@ -83,20 +83,20 @@ export function SuggestionPanel({ block, documentId, suggestions }: Props) {
   }
 
   return (
-    <div className="mt-1 border border-amber-800/40 rounded-md overflow-hidden bg-zinc-900/60">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-amber-800/30 bg-amber-950/20">
+    <div className="mt-4 overflow-hidden rounded-2xl border [border-color:var(--border-subtle)] [background:var(--surface-1)]">
+      <div className="flex items-center justify-between px-5 py-3 border-b [border-color:var(--border-subtle)] [background:var(--accent-soft)]">
         <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-          <span className="text-xs font-mono text-amber-400 uppercase tracking-wider">
-            AI suggestion — {suggestion.suggestion_type}
+          <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-[var(--accent)]" />
+          <span className="text-xs font-mono uppercase tracking-wider [color:var(--accent)]">
+            Review draft — {suggestion.suggestion_type}
           </span>
         </div>
         {suggestions.length > 1 && (
-          <div className="flex items-center gap-2 text-xs font-mono text-zinc-500">
+          <div className="flex items-center gap-2 text-xs font-mono [color:var(--text-subtle)]">
             <button
               onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
               disabled={currentIndex === 0}
-              className="hover:text-zinc-300 disabled:opacity-30"
+              className="transition-colors hover:[color:var(--text-main)] disabled:opacity-30"
             >
               ‹
             </button>
@@ -108,7 +108,7 @@ export function SuggestionPanel({ block, documentId, suggestions }: Props) {
                 setCurrentIndex((i) => Math.min(suggestions.length - 1, i + 1))
               }
               disabled={currentIndex === suggestions.length - 1}
-              className="hover:text-zinc-300 disabled:opacity-30"
+              className="transition-colors hover:[color:var(--text-main)] disabled:opacity-30"
             >
               ›
             </button>
@@ -117,59 +117,59 @@ export function SuggestionPanel({ block, documentId, suggestions }: Props) {
       </div>
 
       {!editingAcceptance ? (
-        <div className="grid grid-cols-2 divide-x divide-zinc-800/60">
+        <div className="grid grid-cols-2 divide-x [divide-color:var(--border-subtle)]">
           <div className="p-4">
-            <div className="text-xs font-mono text-zinc-500 mb-3 uppercase tracking-wider">
-              Current
+            <div className="text-xs font-mono mb-3 uppercase tracking-wider [color:var(--text-subtle)]">
+              Current paragraph
             </div>
-            <div className="prose-font text-[15px] leading-relaxed text-zinc-400">
+            <div className="prose-font text-[15px] leading-relaxed [color:var(--text-muted)]">
               {currentText || (
-                <span className="italic text-zinc-600">empty</span>
+                <span className="italic [color:var(--text-subtle)]">empty</span>
               )}
             </div>
           </div>
           <div className="p-4">
-            <div className="text-xs font-mono text-zinc-500 mb-3 uppercase tracking-wider">
-              Suggestion
+            <div className="text-xs font-mono mb-3 uppercase tracking-wider [color:var(--text-subtle)]">
+              Proposed revision
             </div>
             <DiffView original={currentText} modified={suggestion.text} />
           </div>
         </div>
       ) : (
         <div className="p-4">
-          <div className="text-xs font-mono text-zinc-500 mb-3 uppercase tracking-wider">
-            Edit before accepting
+          <div className="text-xs font-mono mb-3 uppercase tracking-wider [color:var(--text-subtle)]">
+            Revise before approval
           </div>
-          <div className="border border-zinc-700/60 rounded p-3 bg-zinc-950/50 focus-within:border-zinc-600">
+          <div className="rounded p-3 focus-within:[border-color:var(--border-strong)] [border:1px_solid_var(--border-subtle)] [background:var(--app-bg-soft)]">
             <EditorContent
               editor={editEditor}
-              className="prose-font text-[15px] leading-relaxed text-zinc-200 min-h-[4em]"
+              className="prose-font text-[15px] leading-relaxed min-h-[4em] [color:var(--text-main)]"
             />
           </div>
         </div>
       )}
 
-      <div className="flex items-center gap-2 px-4 py-3 border-t border-zinc-800/60 bg-zinc-950/30">
+      <div className="flex items-center gap-2 px-4 py-3 border-t [border-color:var(--border-subtle)] [background:var(--surface-2)]">
         {!editingAcceptance ? (
           <>
             <button
               onClick={handleAccept}
               disabled={loading !== null}
-              className="px-3 py-1.5 text-xs font-mono rounded-sm bg-amber-700/80 hover:bg-amber-600/80 text-amber-100 border border-amber-600/50 disabled:opacity-50 transition-colors"
+              className="px-3 py-1.5 text-xs font-mono rounded-sm border disabled:opacity-50 transition-colors [background:var(--accent)] [border-color:var(--accent)] text-white hover:opacity-90"
             >
-              {loading === 'accept' ? '…' : 'Accept'}
+              {loading === 'accept' ? '…' : 'Approve'}
             </button>
             <button
               onClick={() => setEditingAcceptance(true)}
               disabled={loading !== null}
-              className="px-3 py-1.5 text-xs font-mono rounded-sm bg-zinc-700/60 hover:bg-zinc-600/60 text-zinc-200 border border-zinc-600/50 disabled:opacity-50 transition-colors"
+              className="px-3 py-1.5 text-xs font-mono rounded-sm border disabled:opacity-50 transition-colors [background:var(--surface-1)] [border-color:var(--border-subtle)] [color:var(--text-main)] hover:[border-color:var(--border-strong)]"
             >
-              Edit & Accept
+              Revise & approve
             </button>
             <button
               onClick={handleReject}
               disabled={loading !== null}
-              className="px-3 py-1.5 text-xs font-mono rounded-sm text-zinc-500 hover:text-red-400 hover:bg-red-950/30 border border-zinc-700/40 hover:border-red-800/50 disabled:opacity-50 transition-colors"
+              className="px-3 py-1.5 text-xs font-mono rounded-sm border disabled:opacity-50 transition-colors [border-color:var(--border-subtle)] [color:var(--text-subtle)] hover:[border-color:var(--danger)] hover:[color:var(--danger)] hover:[background:var(--danger-soft)]"
             >
               {loading === 'reject' ? '…' : 'Reject'}
             </button>
@@ -179,14 +179,14 @@ export function SuggestionPanel({ block, documentId, suggestions }: Props) {
             <button
               onClick={handleSubmitEdits}
               disabled={loading !== null}
-              className="px-3 py-1.5 text-xs font-mono rounded-sm bg-teal-700/80 hover:bg-teal-600/80 text-teal-100 border border-teal-600/50 disabled:opacity-50 transition-colors"
+              className="px-3 py-1.5 text-xs font-mono rounded-sm border disabled:opacity-50 transition-colors [background:var(--success)] [border-color:var(--success)] text-white hover:opacity-90"
             >
-              {loading === 'edit-accept' ? '…' : 'Accept with edits'}
+              {loading === 'edit-accept' ? '…' : 'Approve revision'}
             </button>
             <button
               onClick={() => setEditingAcceptance(false)}
               disabled={loading !== null}
-              className="px-3 py-1.5 text-xs font-mono rounded-sm text-zinc-500 hover:text-zinc-300 border border-zinc-700/40 disabled:opacity-50 transition-colors"
+              className="px-3 py-1.5 text-xs font-mono rounded-sm border disabled:opacity-50 transition-colors [border-color:var(--border-subtle)] [color:var(--text-subtle)] hover:[color:var(--text-main)]"
             >
               Cancel
             </button>

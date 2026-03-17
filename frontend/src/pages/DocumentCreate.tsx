@@ -30,19 +30,19 @@ export function DocumentCreate() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-main)]">
       <NavBar back={{ to: '/', label: 'back' }} title="New document" />
 
       <main className="max-w-2xl mx-auto px-6 py-10">
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="text-sm font-mono text-red-400 border border-red-800/40 bg-red-950/20 rounded p-3">
+            <div className="text-sm font-mono rounded-xl p-3 [color:var(--danger)] [border:1px_solid_var(--danger-soft)] [background:var(--danger-soft)]">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-mono text-zinc-500 uppercase tracking-widest mb-2">
+            <label className="block text-xs font-mono uppercase tracking-widest mb-2 [color:var(--text-subtle)]">
               Title *
             </label>
             <input
@@ -52,12 +52,12 @@ export function DocumentCreate() {
               required
               autoFocus
               placeholder="Policy document title"
-              className="w-full bg-zinc-900 border border-zinc-700/60 rounded px-3 py-2 text-sm font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition-colors"
+              className="w-full rounded-xl px-4 py-3 text-sm font-mono transition-colors [background:var(--surface-1)] [border:1px_solid_var(--border-subtle)] [color:var(--text-main)] placeholder:[color:var(--text-subtle)] focus:outline-none focus:[border-color:var(--border-strong)]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-mono text-zinc-500 uppercase tracking-widest mb-2">
+            <label className="block text-xs font-mono uppercase tracking-widest mb-2 [color:var(--text-subtle)]">
               Description
             </label>
             <input
@@ -65,24 +65,24 @@ export function DocumentCreate() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief description (optional)"
-              className="w-full bg-zinc-900 border border-zinc-700/60 rounded px-3 py-2 text-sm font-mono text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition-colors"
+              className="w-full rounded-xl px-4 py-3 text-sm transition-colors [background:var(--surface-1)] [border:1px_solid_var(--border-subtle)] [color:var(--text-main)] placeholder:[color:var(--text-subtle)] focus:outline-none focus:[border-color:var(--border-strong)]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-mono text-zinc-500 uppercase tracking-widest mb-2">
+            <label className="block text-xs font-mono uppercase tracking-widest mb-2 [color:var(--text-subtle)]">
               Initial content
             </label>
-            <p className="text-xs font-mono text-zinc-600 mb-2">
+            <p className="text-xs font-mono mb-2 [color:var(--text-subtle)]">
               Paste existing text. Blank lines between paragraphs create
-              separate blocks.
+              separate paragraphs.
             </p>
             <textarea
               value={initialContent}
               onChange={(e) => setInitialContent(e.target.value)}
               rows={10}
               placeholder="Paste your document text here…"
-              className="w-full bg-zinc-900 border border-zinc-700/60 rounded px-3 py-2 text-sm prose-font text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition-colors resize-y"
+              className="w-full rounded-2xl px-4 py-4 text-base prose-font transition-colors resize-y [background:var(--surface-1)] [border:1px_solid_var(--border-subtle)] [color:var(--text-main)] placeholder:[color:var(--text-subtle)] focus:outline-none focus:[border-color:var(--border-strong)]"
             />
           </div>
 
@@ -90,14 +90,14 @@ export function DocumentCreate() {
             <button
               type="submit"
               disabled={submitting || !title.trim()}
-              className="px-4 py-2 text-xs font-mono rounded-sm bg-zinc-200 hover:bg-white text-zinc-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-3 text-xs font-mono rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-colors [background:var(--text-strong)] [color:var(--app-bg)] hover:opacity-90"
             >
               {submitting ? 'Creating…' : 'Create document'}
             </button>
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="px-4 py-2 text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="px-4 py-2 text-xs font-mono transition-colors [color:var(--text-subtle)] hover:[color:var(--text-main)]"
             >
               Cancel
             </button>

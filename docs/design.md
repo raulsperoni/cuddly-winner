@@ -1,4 +1,4 @@
-# Current Architecture
+# Design
 
 ## Product surface
 
@@ -29,14 +29,14 @@ Deployment
 
 ## Why this architecture
 
-The product now has a clear split:
+The product has a clear split:
 
 - Django handles auth, API endpoints, and server-side integration concerns.
-- React handles the authenticated drafting interface and collaboration workflow.
-  It also renders the public read-only document route.
+- React handles the drafting interface, collaboration workflow, and the public
+  read-only document route.
 
-This keeps the public link simple while giving the editor a richer client-side
-state model.
+This keeps the backend authoritative while giving the editor a modern client
+runtime.
 
 ## Core entities
 
@@ -51,18 +51,19 @@ state model.
 
 ## Routing model
 
-Authenticated SPA entry points:
+SPA entry routes:
 
 - `/`
 - `/documents/new/`
 - `/documents/<id>/edit/`
 - `/documents/<id>/history/`
-
-Server-rendered entry routes:
-
 - `/p/<public_token>/`
+
+Server-handled routes:
+
 - `/join/<invite_token>/`
 - `/accounts/...`
+- `/api/v1/...`
 
 ## Permission model
 
@@ -70,9 +71,8 @@ Server-rendered entry routes:
 - Collaborator access comes from `DocumentMembership`.
 - Public access is read-only and token-based.
 
-## Current constraints
+## Main constraints
 
 - Auth pages still use default allauth templates and styling.
-- Session-cookie auth assumes same-site deployment for SPA and backend.
-- Auth pages still use default allauth templates and styling, so the visual
-  language still breaks between product surfaces.
+- Session-cookie auth currently assumes same-site deployment for SPA and backend.
+- The frontend bundle is still large and should be split before production hardening.

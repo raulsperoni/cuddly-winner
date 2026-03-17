@@ -1,7 +1,4 @@
-# Product Specs
-
-This document captures the current product-level rules. The API-specific
-details and acceptance tests live in `design/SPECS.md`.
+# Specs
 
 ## Roles
 
@@ -63,4 +60,12 @@ public reader
 ### Spec 008 — Authenticated app surface
 
 - Authenticated document workflows are served through the React SPA.
-- The Django-rendered UI is limited to public read-only pages and auth pages.
+- Public shared documents are also served through the React SPA.
+- Django-rendered pages are limited to auth and redirect/entry concerns.
+
+## Current implementation constraints
+
+- Document lists must include both owned and collaborator documents.
+- Owners alone can manage collaborators, snapshots, and GitHub export.
+- Public API responses must stay read-only and omit private collaboration data.
+- There is deliberately no bulk accept workflow for suggestions.

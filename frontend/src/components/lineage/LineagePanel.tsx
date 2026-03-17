@@ -45,7 +45,7 @@ export function LineagePanel({ blockId, documentId, isOpen, onToggle }: Props) {
     <div>
       <button
         onClick={onToggle}
-        className="flex items-center gap-1.5 text-xs font-mono text-zinc-600 hover:text-zinc-400 transition-colors"
+        className="flex items-center gap-1.5 text-xs font-mono transition-colors [color:var(--text-subtle)] hover:[color:var(--text-main)]"
       >
         <svg
           className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-90' : ''}`}
@@ -56,15 +56,15 @@ export function LineagePanel({ blockId, documentId, isOpen, onToggle }: Props) {
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
-        History
+        Review trail
       </button>
 
       {isOpen && (
-        <div className="mt-2 pl-3 border-l border-zinc-800">
+        <div className="mt-2 border-l pl-3 [border-color:var(--border-subtle)]">
           {loading ? (
-            <div className="text-xs font-mono text-zinc-600 py-1">Loading…</div>
+            <div className="text-xs font-mono py-1 [color:var(--text-subtle)]">Loading…</div>
           ) : versions.length === 0 ? (
-            <div className="text-xs font-mono text-zinc-600 py-1">No versions yet</div>
+            <div className="text-xs font-mono py-1 [color:var(--text-subtle)]">No revisions yet</div>
           ) : (
             <ol className="space-y-2">
               {versions.map((v, i) => (
@@ -72,25 +72,33 @@ export function LineagePanel({ blockId, documentId, isOpen, onToggle }: Props) {
                   <div className="flex items-start gap-2">
                     <span
                       className={`mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                        v.is_current ? 'bg-zinc-300' : 'bg-zinc-700'
+                        v.is_current ? 'bg-[var(--text-main)]' : 'bg-[var(--text-subtle)]'
                       }`}
                     />
                     <div className="leading-relaxed">
-                      <span className="text-zinc-500">
-                        v{versions.length - i} —{' '}
+                      <span className="[color:var(--text-subtle)]">
+                        revision {versions.length - i}{' '}
                       </span>
                       {v.author_type === 'ai' ? (
-                        <span className="text-amber-500">AI suggestion</span>
+                        <span className="[color:var(--accent)]">AI-approved draft</span>
                       ) : (
-                        <span className="text-blue-400">
+                        <span className="[color:var(--text-main)]">
                           {v.author_username ?? 'you'}
                         </span>
                       )}
-                      <span className="text-zinc-600">
-                        {' '}— {formatTime(v.created_at)}
+                      <span className="[color:var(--text-subtle)]">
+                        {' '}· {formatTime(v.created_at)}
                       </span>
                       {v.is_current && (
-                        <span className="ml-1.5 text-zinc-600">[current]</span>
+                        <span className="ml-1.5 [color:var(--text-subtle)]">current</span>
+                      )}
+                      {v.author_type === 'ai' && v.decision && (
+                        <div className="mt-1 text-[11px] [color:var(--text-subtle)]">
+                          Approved by {v.decision.decided_by_username}
+                          {v.decision.decision_type === 'accept_with_edits'
+                            ? ' after revision'
+                            : ''}
+                        </div>
                       )}
                     </div>
                   </div>

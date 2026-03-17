@@ -1,20 +1,24 @@
 interface Props {
   authorType: 'human' | 'ai'
+  approvedBy?: string | null
+  decisionType?: 'accept' | 'reject' | 'accept_with_edits' | null
 }
 
-export function AuthorshipBadge({ authorType }: Props) {
+export function AuthorshipBadge({ authorType, approvedBy, decisionType }: Props) {
   if (authorType === 'ai') {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-mono tracking-tight rounded-sm border border-amber-700/50 bg-amber-950/30 text-amber-400 select-none">
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
-        AI accepted
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-mono tracking-tight rounded-sm border [border-color:var(--accent)] [background:var(--accent-soft)] [color:var(--accent)] select-none">
+        <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] flex-shrink-0" />
+        {approvedBy
+          ? `AI draft approved by ${approvedBy}${decisionType === 'accept_with_edits' ? ' after revision' : ''}`
+          : 'AI-approved draft'}
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-mono tracking-tight rounded-sm border border-blue-800/50 bg-blue-950/20 text-blue-400 select-none">
-      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
-      Human
+    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-mono tracking-tight rounded-sm border [border-color:var(--border-subtle)] [background:var(--surface-1)] [color:var(--text-muted)] select-none">
+      <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-subtle)] flex-shrink-0" />
+      Human draft
     </span>
   )
 }

@@ -6,6 +6,13 @@ export interface BlockVersion {
   based_on_version_id: number | null
   is_current: boolean
   created_at: string
+  decision: {
+    id: number
+    decision_type: 'accept' | 'reject' | 'accept_with_edits'
+    decided_by_username: string
+    notes: string
+    created_at: string
+  } | null
 }
 
 export interface Suggestion {

@@ -87,34 +87,34 @@ export function BlockEditor({
       >
         <EditorContent
           editor={editor}
-          className={`prose-font text-[15px] leading-relaxed ${
-            isEditing ? 'text-zinc-100' : 'text-zinc-300'
+          className={`prose-font text-[18px] leading-[1.85] ${
+            isEditing ? '[color:var(--text-strong)]' : '[color:var(--text-main)]'
           }`}
         />
         {!text && !isEditing && (
-          <span className="prose-font text-[15px] text-zinc-600 italic">
-            Empty — click to edit
+          <span className="prose-font text-[18px] italic [color:var(--text-subtle)]">
+            Empty paragraph. Click to begin writing.
           </span>
         )}
       </div>
 
       {isEditing && (
-        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-800/40">
+        <div className="mt-5 flex items-center gap-2 border-t pt-4 [border-color:var(--border-subtle)]">
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-3 py-1.5 text-xs font-mono rounded-sm bg-zinc-700/80 hover:bg-zinc-600 text-zinc-100 border border-zinc-600/50 disabled:opacity-50 transition-colors"
+            className="rounded-sm border px-3 py-1.5 text-xs font-mono text-white transition-colors disabled:opacity-50 [background:var(--text-main)] [border-color:var(--text-main)] hover:opacity-90"
           >
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? 'Saving…' : 'Save revision'}
           </button>
           <button
             onClick={onCancel}
-            className="px-3 py-1.5 text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="px-3 py-1.5 text-xs font-mono transition-colors [color:var(--text-subtle)] hover:[color:var(--text-main)]"
           >
-            Cancel
+            Keep current text
           </button>
-          <span className="text-xs font-mono text-zinc-700 ml-auto">
-            ⌘↵ save · Esc cancel
+          <span className="ml-auto text-xs font-mono [color:var(--text-subtle)]">
+            ⌘↵ save revision · Esc cancel
           </span>
         </div>
       )}

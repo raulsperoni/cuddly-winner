@@ -27,12 +27,12 @@ export function DocumentList() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-main)]">
       <NavBar
         actions={
           <Link
             to="/documents/new"
-            className="px-3 py-1.5 text-xs font-mono rounded-sm bg-zinc-700/80 hover:bg-zinc-600 text-zinc-100 border border-zinc-600/50 transition-colors"
+            className="rounded-sm border px-3 py-1.5 text-xs font-mono text-white transition-colors [background:var(--text-main)] [border-color:var(--text-main)] hover:opacity-90"
           >
             + New document
           </Link>
@@ -40,30 +40,30 @@ export function DocumentList() {
       />
 
       <main className="max-w-4xl mx-auto px-6 py-10">
-        <h2 className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-6">
+        <h2 className="text-xs font-mono uppercase tracking-widest mb-6 [color:var(--text-subtle)]">
           Documents
         </h2>
 
         {loading && (
-          <p className="text-sm font-mono text-zinc-600 animate-pulse">
+          <p className="text-sm font-mono animate-pulse [color:var(--text-subtle)]">
             Loading…
           </p>
         )}
 
         {error && (
-          <p className="text-sm font-mono text-red-400 border border-red-800/40 bg-red-950/20 rounded p-3">
+          <p className="text-sm font-mono rounded-xl p-3 [color:var(--danger)] [border:1px_solid_var(--danger-soft)] [background:var(--danger-soft)]">
             {error}
           </p>
         )}
 
         {!loading && !error && docs.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-sm font-mono text-zinc-600 mb-4">
+            <p className="text-sm font-mono mb-4 [color:var(--text-subtle)]">
               No documents yet.
             </p>
             <Link
               to="/documents/new"
-              className="text-xs font-mono text-zinc-400 hover:text-zinc-200 transition-colors"
+              className="text-xs font-mono transition-colors [color:var(--text-muted)] hover:[color:var(--text-main)]"
             >
               Create your first document →
             </Link>
@@ -71,53 +71,53 @@ export function DocumentList() {
         )}
 
         {docs.length > 0 && (
-          <div className="divide-y divide-zinc-800/60">
+          <div className="divide-y [border-color:var(--border-subtle)]">
             {docs.map((doc) => (
               <button
                 key={doc.id}
                 onClick={() => navigate(`/documents/${doc.id}/edit`)}
-                className="w-full text-left py-4 flex items-start justify-between gap-6 hover:bg-zinc-900/40 -mx-4 px-4 rounded transition-colors group"
+                className="w-full text-left py-5 flex items-start justify-between gap-6 hover:[background:var(--surface-3)] -mx-4 px-4 rounded-2xl transition-colors group"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-mono text-zinc-200 group-hover:text-white transition-colors truncate">
+                    <span className="text-base prose-font [color:var(--text-main)] group-hover:[color:var(--text-strong)] transition-colors truncate">
                       {doc.title}
                     </span>
                     <span
                       className={`flex-shrink-0 px-1.5 py-0.5 text-[10px] font-mono rounded-sm border ${
                         doc.access_role === 'owner'
-                          ? 'border-blue-800/50 text-blue-400'
-                          : 'border-amber-800/50 text-amber-400'
+                          ? '[border-color:var(--border-strong)] [color:var(--text-muted)]'
+                          : '[border-color:var(--accent)] [color:var(--accent)]'
                       }`}
                     >
-                      {doc.access_role === 'owner' ? 'owned' : 'shared'}
+                      {doc.access_role === 'owner' ? 'lead' : 'shared'}
                     </span>
                     <span
                       className={`flex-shrink-0 px-1.5 py-0.5 text-xs font-mono rounded-sm border ${
                         doc.status === 'published'
-                          ? 'border-green-800/50 text-green-500'
-                          : 'border-zinc-700/50 text-zinc-500'
+                          ? '[border-color:var(--success)] [color:var(--success)]'
+                          : '[border-color:var(--border-subtle)] [color:var(--text-subtle)]'
                       }`}
                     >
                       {doc.status}
                     </span>
                   </div>
                   {doc.description && (
-                    <p className="text-xs font-mono text-zinc-600 truncate">
+                    <p className="text-sm truncate [color:var(--text-muted)]">
                       {doc.description}
                     </p>
                   )}
                   {doc.access_role === 'collaborator' && (
-                    <p className="mt-1 text-[11px] font-mono text-zinc-700 truncate">
-                      owned by {doc.owner_username}
+                    <p className="mt-1 text-[11px] font-mono truncate [color:var(--text-subtle)]">
+                      shared by {doc.owner_username}
                     </p>
                   )}
                 </div>
                 <div className="flex-shrink-0 text-right">
-                  <div className="text-xs font-mono text-zinc-600">
-                    {doc.block_count} block{doc.block_count !== 1 ? 's' : ''}
+                  <div className="text-xs font-mono [color:var(--text-muted)]">
+                    {doc.block_count} paragraph{doc.block_count !== 1 ? 's' : ''}
                   </div>
-                  <div className="text-xs font-mono text-zinc-700 mt-0.5">
+                  <div className="text-xs font-mono mt-0.5 [color:var(--text-subtle)]">
                     {formatDate(doc.updated_at)}
                   </div>
                 </div>

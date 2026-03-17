@@ -1,11 +1,16 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { useDocumentStore } from '../stores/document'
 import { BlockList } from '../components/editor/BlockList'
 import { NavBar } from '../components/shared/NavBar'
-import { SnapshotPanel } from '../components/snapshots/SnapshotPanel'
 import type { Member } from '../api/types'
+
+const SnapshotPanel = lazy(() =>
+  import('../components/snapshots/SnapshotPanel').then((mod) => ({
+    default: mod.SnapshotPanel,
+  })),
+)
 
 export function DocumentEditor() {
   const { id } = useParams<{ id: string }>()
@@ -40,9 +45,9 @@ export function DocumentEditor() {
   const joinStatus = searchParams.get('join_status')
   const joinMessage =
     joinStatus === 'joined'
-      ? 'You joined as a collaborator.'
+      ? 'You can now review and edit this document.'
       : joinStatus === 'already-has-access'
-        ? 'You already have access to this document.'
+        ? 'You already have editing access to this document.'
         : null
 
   const dismissJoinMessage = () => {
@@ -53,8 +58,8 @@ export function DocumentEditor() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-sm font-mono text-red-400 border border-red-800/40 bg-red-950/20 rounded-md p-4 max-w-md">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--app-bg)]">
+        <div className="max-w-md rounded-2xl p-4 text-sm font-mono [color:var(--danger)] [border:1px_solid_var(--danger-soft)] [background:var(--danger-soft)]">
           Failed to load document: {error}
         </div>
       </div>
@@ -63,8 +68,8 @@ export function DocumentEditor() {
 
   if (!document) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <span className="text-sm font-mono text-zinc-600 animate-pulse">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--app-bg)]">
+        <span className="text-sm font-mono animate-pulse [color:var(--text-subtle)]">
           Loading…
         </span>
       </div>
@@ -77,7 +82,7 @@ export function DocumentEditor() {
   )
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-main)]">
       <NavBar
         back={{ to: '/', label: 'documents' }}
         title={document.title}
@@ -90,23 +95,23 @@ export function DocumentEditor() {
             document.access_role === 'owner' ? handleRemoveMember : undefined,
         }}
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {pendingCount > 0 && (
-              <span className="text-xs font-mono text-amber-400">
-                {pendingCount} pending
+              <span className="text-xs font-mono [color:var(--accent)]">
+                {pendingCount} awaiting review
               </span>
             )}
             <a
               href={`/documents/${documentId}/history/`}
-              className="text-xs font-mono text-zinc-600 hover:text-zinc-400 transition-colors"
+              className="text-xs font-mono transition-colors [color:var(--text-subtle)] hover:[color:var(--text-main)]"
             >
-              history
+              activity
             </a>
             <span
               className={`px-1.5 py-0.5 text-xs font-mono rounded-sm border ${
                 document.status === 'published'
-                  ? 'border-green-800/50 text-green-500'
-                  : 'border-zinc-700/50 text-zinc-500'
+                  ? '[border-color:var(--success)] [color:var(--success)]'
+                  : '[border-color:var(--border-subtle)] [color:var(--text-subtle)]'
               }`}
             >
               {document.status}
@@ -114,14 +119,14 @@ export function DocumentEditor() {
             <span
               className={`px-1.5 py-0.5 text-xs font-mono rounded-sm border ${
                 document.access_role === 'owner'
-                  ? 'border-blue-800/50 text-blue-400'
-                  : 'border-amber-800/50 text-amber-400'
+                  ? '[border-color:var(--border-strong)] [color:var(--text-muted)]'
+                  : '[border-color:var(--accent)] [color:var(--accent)]'
               }`}
             >
-              {document.access_role}
+              {document.access_role === 'owner' ? 'lead' : 'collaborator'}
             </span>
-            <span className="text-xs font-mono text-zinc-600">
-              {blocks.length} block{blocks.length !== 1 ? 's' : ''}
+            <span className="text-xs font-mono [color:var(--text-subtle)]">
+              {blocks.length} paragraph{blocks.length !== 1 ? 's' : ''}
             </span>
           </div>
         }
@@ -129,11 +134,11 @@ export function DocumentEditor() {
 
       {joinMessage && (
         <div className="max-w-4xl mx-auto px-6 pt-6">
-          <div className="flex items-center justify-between gap-4 rounded border border-emerald-800/50 bg-emerald-950/30 px-4 py-3">
-            <span className="text-xs font-mono text-emerald-300">{joinMessage}</span>
+          <div className="flex items-center justify-between gap-4 rounded-2xl px-4 py-3 [border:1px_solid_var(--success-soft)] [background:var(--success-soft)]">
+            <span className="text-xs font-mono [color:var(--success)]">{joinMessage}</span>
             <button
               onClick={dismissJoinMessage}
-              className="text-xs font-mono text-emerald-500 hover:text-emerald-300 transition-colors"
+              className="text-xs font-mono transition-colors [color:var(--success)] hover:opacity-80"
             >
               dismiss
             </button>
@@ -143,7 +148,7 @@ export function DocumentEditor() {
 
       {document.description && (
         <div className="max-w-4xl mx-auto px-6 pt-8 pb-2">
-          <p className="prose-font text-sm text-zinc-500 leading-relaxed">
+          <p className="prose-font text-base leading-relaxed [color:var(--text-muted)]">
             {document.description}
           </p>
         </div>
@@ -154,11 +159,21 @@ export function DocumentEditor() {
       </main>
 
       {document.access_role === 'owner' ? (
-        <SnapshotPanel
-          documentId={documentId}
-          isOpen={snapshotOpen}
-          onToggle={() => setSnapshotOpen((o) => !o)}
-        />
+        <Suspense
+          fallback={
+            <div className="mt-8 border-t [border-color:var(--border-subtle)]">
+              <div className="mx-auto max-w-4xl px-6 py-4 text-xs font-mono animate-pulse [color:var(--text-subtle)]">
+                Loading revisions…
+              </div>
+            </div>
+          }
+        >
+          <SnapshotPanel
+            documentId={documentId}
+            isOpen={snapshotOpen}
+            onToggle={() => setSnapshotOpen((o) => !o)}
+          />
+        </Suspense>
       ) : null}
 
       <div className="pb-16" />

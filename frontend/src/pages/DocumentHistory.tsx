@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { NavBar } from '../components/shared/NavBar'
 
@@ -14,24 +14,24 @@ interface AuditEvent {
 
 const EVENT_LABELS: Record<string, string> = {
   document_created: 'Document created',
-  block_created: 'Block added',
-  block_edited: 'Block edited',
-  suggestion_created: 'AI suggestion requested',
-  suggestion_accepted: 'AI suggestion accepted',
-  suggestion_rejected: 'AI suggestion rejected',
+  block_created: 'Paragraph added',
+  block_edited: 'Paragraph revised',
+  suggestion_created: 'AI draft requested',
+  suggestion_accepted: 'AI draft approved',
+  suggestion_rejected: 'AI draft rejected',
   snapshot_created: 'Snapshot created',
   snapshot_exported: 'Snapshot exported to GitHub',
 }
 
 const EVENT_COLORS: Record<string, string> = {
-  document_created: 'text-blue-400',
-  block_created: 'text-zinc-400',
-  block_edited: 'text-zinc-400',
-  suggestion_created: 'text-amber-500',
-  suggestion_accepted: 'text-green-400',
-  suggestion_rejected: 'text-red-400',
-  snapshot_created: 'text-purple-400',
-  snapshot_exported: 'text-purple-400',
+  document_created: '[color:var(--success)]',
+  block_created: '[color:var(--text-muted)]',
+  block_edited: '[color:var(--text-muted)]',
+  suggestion_created: '[color:var(--accent)]',
+  suggestion_accepted: '[color:var(--success)]',
+  suggestion_rejected: '[color:var(--danger)]',
+  snapshot_created: '[color:var(--accent)]',
+  snapshot_exported: '[color:var(--accent)]',
 }
 
 function formatTime(dateStr: string): string {
@@ -42,6 +42,41 @@ function formatTime(dateStr: string): string {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function describeEvent(event: AuditEvent): string | null {
+  if (event.event_type === 'suggestion_created') {
+    const suggestionType = event.data.suggestion_type
+    return suggestionType ? `Requested an AI ${String(suggestionType)} draft.` : 'Requested an AI draft.'
+  }
+  if (event.event_type === 'suggestion_accepted') {
+    const decisionType = event.data.decision_type
+    if (decisionType === 'accept_with_edits') {
+      return 'Approved an AI draft after revising the wording.'
+    }
+    return 'Approved the AI-proposed wording.'
+  }
+  if (event.event_type === 'suggestion_rejected') {
+    return 'Rejected the AI-proposed wording.'
+  }
+  if (event.event_type === 'snapshot_created') {
+    const version = event.data.version_number ?? event.data.version
+    return version ? `Saved snapshot v${String(version)}.` : 'Saved a snapshot.'
+  }
+  if (event.event_type === 'snapshot_exported') {
+    const repo = event.data.github_repo ?? event.data.repo
+    return repo ? `Exported a snapshot to ${String(repo)}.` : 'Exported a snapshot to GitHub.'
+  }
+  if (event.event_type === 'block_edited') {
+    return 'Saved a revision to this paragraph.'
+  }
+  if (event.event_type === 'block_created') {
+    return 'Added a new paragraph.'
+  }
+  if (event.event_type === 'document_created') {
+    return 'Opened a new drafting document.'
+  }
+  return null
 }
 
 export function DocumentHistory() {
@@ -67,59 +102,67 @@ export function DocumentHistory() {
   }, [docId])
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-main)]">
       <NavBar
         back={{ to: `/documents/${docId}/edit`, label: 'editor' }}
-        title={docTitle || 'History'}
+        title={docTitle || 'Activity'}
       />
 
       <main className="max-w-3xl mx-auto px-6 py-10">
-        <h2 className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-8">
-          Audit timeline
+        <h2 className="text-xs font-mono uppercase tracking-widest mb-8 [color:var(--text-subtle)]">
+          Document activity
         </h2>
 
         {loading && (
-          <p className="text-sm font-mono text-zinc-600 animate-pulse">
+          <p className="text-sm font-mono animate-pulse [color:var(--text-subtle)]">
             Loading…
           </p>
         )}
 
         {error && (
-          <p className="text-sm font-mono text-red-400 border border-red-800/40 bg-red-950/20 rounded p-3">
+          <p className="text-sm font-mono rounded-xl p-3 [color:var(--danger)] [border:1px_solid_var(--danger-soft)] [background:var(--danger-soft)]">
             {error}
           </p>
         )}
 
         {!loading && events.length === 0 && (
-          <p className="text-sm font-mono text-zinc-600">No events yet.</p>
+          <p className="text-sm font-mono [color:var(--text-subtle)]">No activity yet.</p>
         )}
 
         {events.length > 0 && (
-          <ol className="relative border-l border-zinc-800/60 space-y-0">
+          <ol className="relative border-l space-y-0 [border-color:var(--border-subtle)]">
             {events.map((event) => (
               <li key={event.id} className="ml-4 pb-6">
-                <span className="absolute -left-1.5 w-3 h-3 rounded-full bg-zinc-800 border border-zinc-700" />
+                <span className="absolute -left-1.5 w-3 h-3 rounded-full [background:var(--surface-2)] [border:1px_solid_var(--border-strong)]" />
                 <div className="flex flex-col gap-0.5">
                   <span
                     className={`text-xs font-mono ${
-                      EVENT_COLORS[event.event_type] ?? 'text-zinc-400'
+                      EVENT_COLORS[event.event_type] ?? '[color:var(--text-muted)]'
                     }`}
                   >
                     {EVENT_LABELS[event.event_type] ?? event.event_type}
                   </span>
-                  <div className="flex items-center gap-3 text-xs font-mono text-zinc-600">
+                  <div className="mt-1 text-sm leading-7 [color:var(--text-main)]">
+                    {describeEvent(event)}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-xs font-mono [color:var(--text-subtle)]">
                     {event.actor_username && (
-                      <span className="text-zinc-500">{event.actor_username}</span>
+                      <span>{event.actor_username}</span>
                     )}
                     <span>{formatTime(event.created_at)}</span>
                     {event.block_id && (
-                      <span>block #{event.block_id}</span>
+                      <span>paragraph #{event.block_id}</span>
                     )}
                   </div>
                   {Object.keys(event.data).length > 0 && (
-                    <pre className="mt-1 text-xs font-mono text-zinc-700 bg-zinc-900/40 rounded px-2 py-1 overflow-x-auto">
-                      {JSON.stringify(event.data, null, 2)}
-                    </pre>
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-[11px] font-mono uppercase tracking-[0.2em] [color:var(--text-subtle)]">
+                        Raw event data
+                      </summary>
+                      <pre className="mt-2 overflow-x-auto rounded-xl px-3 py-2 text-xs font-mono [color:var(--text-subtle)] [background:var(--surface-2)]">
+                        {JSON.stringify(event.data, null, 2)}
+                      </pre>
+                    </details>
                   )}
                 </div>
               </li>
