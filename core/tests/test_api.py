@@ -8,6 +8,7 @@ from core.models import (
     BlockVersion,
     Decision,
     Document,
+    DocumentMembership,
     Snapshot,
     Suggestion,
 )
@@ -65,6 +66,21 @@ def auth_client(client, user):
     return client
 
 
+@pytest.fixture
+def collaborator_client(client, other_user):
+    client.login(username='other', password='pass')
+    return client
+
+
+@pytest.fixture
+def collaborator_membership(document, other_user):
+    return DocumentMembership.objects.create(
+        document=document,
+        user=other_user,
+        role=DocumentMembership.ROLE_COLLABORATOR,
+    )
+
+
 # --- Spec 011: list documents ---
 
 
@@ -77,6 +93,8 @@ class TestDocumentList:
         assert len(data) == 1
         assert data[0]['title'] == 'Test Doc'
         assert 'block_count' in data[0]
+        assert data[0]['access_role'] == 'owner'
+        assert 'invite_token' in data[0]
 
     def test_excludes_other_users_documents(
         self, auth_client, other_user
@@ -87,6 +105,17 @@ class TestDocumentList:
         resp = auth_client.get('/api/v1/documents/')
         assert resp.status_code == 200
         assert len(resp.json()) == 0
+
+    def test_includes_collaborator_documents(
+        self, collaborator_client, document, collaborator_membership
+    ):
+        resp = collaborator_client.get('/api/v1/documents/')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]['id'] == document.pk
+        assert data[0]['access_role'] == 'collaborator'
+        assert data[0]['owner_username'] == document.created_by.username
 
     def test_unauthenticated_returns_403(self, client):
         resp = client.get('/api/v1/documents/')
@@ -119,6 +148,17 @@ class TestDocumentDetail:
         b = data['blocks'][0]
         assert b['current_version']['text'] == 'Initial text'
         assert 'pending_suggestions' in b
+        assert data['invite_token'] == str(document.invite_token)
+        assert data['access_role'] == 'owner'
+
+    def test_collaborator_can_view_detail(
+        self, collaborator_client, document, block, collaborator_membership
+    ):
+        resp = collaborator_client.get(f'/api/v1/documents/{document.pk}/')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['access_role'] == 'collaborator'
+        assert data['blocks'][0]['current_version']['text'] == 'Initial text'
 
     def test_foreign_document_returns_404(
         self, auth_client, other_user
@@ -153,6 +193,16 @@ class TestDocumentDetail:
         ]
         assert texts[0] == 'A'
         assert texts[1] == 'B'
+
+    def test_collaborator_cannot_patch_document(
+        self, collaborator_client, document, collaborator_membership
+    ):
+        resp = collaborator_client.patch(
+            f'/api/v1/documents/{document.pk}/',
+            {'title': 'New title'},
+            content_type='application/json',
+        )
+        assert resp.status_code == 403
 
 
 # --- Spec 013: edit block text ---
@@ -207,6 +257,18 @@ class TestBlockEdit:
             content_type='application/json',
         )
         assert resp.status_code in (401, 403)
+
+    def test_collaborator_can_edit_block(
+        self, collaborator_client, document, block, collaborator_membership
+    ):
+        resp = collaborator_client.patch(
+            f'/api/v1/documents/{document.pk}/blocks/{block.pk}/',
+            {'text': 'Collaborator edit'},
+            content_type='application/json',
+        )
+        assert resp.status_code == 200
+        block.refresh_from_db()
+        assert block.current_version().text == 'Collaborator edit'
 
 
 # --- Spec 015: accept suggestion ---
@@ -289,6 +351,19 @@ class TestAcceptSuggestion:
         )
         resp = client.post(url, {}, content_type='application/json')
         assert resp.status_code in (401, 403)
+
+    def test_collaborator_can_accept(
+        self, collaborator_client, document, block,
+        pending_suggestion, collaborator_membership
+    ):
+        url = (
+            f'/api/v1/documents/{document.pk}/blocks/{block.pk}'
+            f'/suggestions/{pending_suggestion.pk}/accept/'
+        )
+        resp = collaborator_client.post(
+            url, {}, content_type='application/json'
+        )
+        assert resp.status_code == 200
 
 
 # --- Spec 016: accept with edits ---
@@ -496,6 +571,14 @@ class TestDocumentHistory:
         resp = client.get(f'/api/v1/documents/{document.pk}/history/')
         assert resp.status_code in (401, 403)
 
+    def test_collaborator_can_view_history(
+        self, collaborator_client, document, collaborator_membership
+    ):
+        resp = collaborator_client.get(
+            f'/api/v1/documents/{document.pk}/history/'
+        )
+        assert resp.status_code == 200
+
 
 # --- Spec 020: no bulk accept ---
 
@@ -598,3 +681,175 @@ class TestNoDecisionlessAIVersions:
         )
         for v in block.versions.all():
             assert v.author_type == BlockVersion.AUTHOR_HUMAN
+
+
+# --- Document create with initial_content ---
+
+
+@pytest.mark.django_db
+class TestDocumentCreateWithContent:
+    def test_initial_content_creates_blocks(self, auth_client):
+        resp = auth_client.post(
+            '/api/v1/documents/',
+            {
+                'title': 'Policy Doc',
+                'initial_content': 'First paragraph.\n\nSecond paragraph.',
+            },
+            content_type='application/json',
+        )
+        assert resp.status_code == 201
+        doc_id = resp.json()['id']
+        doc = Document.objects.get(pk=doc_id)
+        assert doc.blocks.count() == 2
+        texts = list(
+            doc.blocks.order_by('position').values_list(
+                'versions__text', flat=True
+            )
+        )
+        assert 'First paragraph.' in texts
+        assert 'Second paragraph.' in texts
+
+    def test_no_initial_content_creates_no_blocks(self, auth_client):
+        resp = auth_client.post(
+            '/api/v1/documents/',
+            {'title': 'Empty Doc'},
+            content_type='application/json',
+        )
+        assert resp.status_code == 201
+        doc_id = resp.json()['id']
+        assert Document.objects.get(pk=doc_id).blocks.count() == 0
+
+    def test_block_versions_are_human_authored(self, auth_client):
+        auth_client.post(
+            '/api/v1/documents/',
+            {
+                'title': 'Doc',
+                'initial_content': 'Some text.',
+            },
+            content_type='application/json',
+        )
+        doc = Document.objects.get(title='Doc')
+        for block in doc.blocks.all():
+            assert block.current_version().author_type == 'human'
+
+
+@pytest.mark.django_db
+class TestCollaboratorMembershipApi:
+    def test_owner_lists_members(
+        self, auth_client, document, collaborator_membership
+    ):
+        resp = auth_client.get(f'/api/v1/documents/{document.pk}/members/')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]['username'] == collaborator_membership.user.username
+
+    def test_collaborator_cannot_list_members(
+        self, collaborator_client, document, collaborator_membership
+    ):
+        resp = collaborator_client.get(
+            f'/api/v1/documents/{document.pk}/members/'
+        )
+        assert resp.status_code == 403
+
+    def test_owner_can_remove_member(
+        self, auth_client, document, collaborator_membership
+    ):
+        resp = auth_client.delete(
+            f'/api/v1/documents/{document.pk}/members/{collaborator_membership.user_id}/'
+        )
+        assert resp.status_code == 204
+        assert not DocumentMembership.objects.filter(
+            document=document,
+            user=collaborator_membership.user,
+        ).exists()
+
+
+@pytest.mark.django_db
+class TestOwnerOnlySnapshotApi:
+    def test_collaborator_cannot_list_snapshots(
+        self, collaborator_client, document, collaborator_membership
+    ):
+        resp = collaborator_client.get(
+            f'/api/v1/documents/{document.pk}/snapshots/'
+        )
+        assert resp.status_code == 403
+
+    def test_collaborator_cannot_create_snapshot(
+        self, collaborator_client, document, collaborator_membership
+    ):
+        resp = collaborator_client.post(
+            f'/api/v1/documents/{document.pk}/snapshots/',
+            {},
+            content_type='application/json',
+        )
+        assert resp.status_code == 403
+
+
+@pytest.mark.django_db
+class TestJoinDocumentFlow:
+    def test_authenticated_join_creates_membership(
+        self, collaborator_client, document
+    ):
+        resp = collaborator_client.get(f'/join/{document.invite_token}/')
+        assert resp.status_code == 302
+        assert resp.url == f'/documents/{document.pk}/edit/?join_status=joined'
+        assert DocumentMembership.objects.filter(
+            document=document,
+            user__username='other',
+        ).exists()
+
+    def test_unauthenticated_join_redirects_to_signup(
+        self, client, document
+    ):
+        resp = client.get(f'/join/{document.invite_token}/')
+        assert resp.status_code == 302
+        assert resp.url == f'/accounts/signup/?next=/join/{document.invite_token}/'
+
+    def test_existing_access_redirects_without_duplicate_membership(
+        self, collaborator_client, document, collaborator_membership
+    ):
+        resp = collaborator_client.get(f'/join/{document.invite_token}/')
+        assert resp.status_code == 302
+        assert (
+            resp.url
+            == f'/documents/{document.pk}/edit/?join_status=already-has-access'
+        )
+        assert DocumentMembership.objects.filter(document=document).count() == 1
+
+
+# --- Auth me ---
+
+
+@pytest.mark.django_db
+class TestAuthMe:
+    def test_returns_current_user(self, auth_client, user):
+        resp = auth_client.get('/api/v1/auth/me/')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['username'] == 'testuser'
+        assert data['id'] == user.pk
+
+    def test_unauthenticated_returns_403(self, client):
+        resp = client.get('/api/v1/auth/me/')
+        assert resp.status_code in (401, 403)
+
+
+# --- SPA shell routes ---
+
+
+@pytest.mark.django_db
+class TestSpaShellRoutes:
+    def test_home_serves_shell(self, auth_client):
+        resp = auth_client.get('/')
+        assert resp.status_code == 200
+        assert b'id="root"' in resp.content
+
+    def test_document_detail_serves_shell(self, auth_client, document):
+        resp = auth_client.get(f'/documents/{document.pk}/')
+        assert resp.status_code == 200
+        assert b'id="root"' in resp.content
+
+    def test_unauthenticated_home_redirects(self, client):
+        resp = client.get('/')
+        assert resp.status_code == 302

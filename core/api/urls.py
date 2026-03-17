@@ -19,6 +19,16 @@ urlpatterns = [
         views.DocumentHistoryView.as_view(),
         name='api-document-history',
     ),
+    path(
+        'documents/<int:pk>/members/',
+        views.DocumentMemberListView.as_view(),
+        name='api-document-members',
+    ),
+    path(
+        'documents/<int:pk>/members/<int:user_id>/',
+        views.DocumentMemberDetailView.as_view(),
+        name='api-document-member-detail',
+    ),
 
     # Blocks
     path(
@@ -91,5 +101,12 @@ urlpatterns = [
         'public/<uuid:token>/',
         views.PublicDocumentView.as_view(),
         name='api-public-document',
+    ),
+
+    # Auth
+    path(
+        'auth/me/',
+        views.AuthMeView.as_view(),
+        name='api-auth-me',
     ),
 ]

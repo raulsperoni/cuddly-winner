@@ -18,6 +18,10 @@ _default_hosts = '127.0.0.1,localhost'
 _allowed = os.environ.get('ALLOWED_HOSTS', _default_hosts)
 ALLOWED_HOSTS = [h.strip() for h in _allowed.split(',') if h.strip()]
 
+_default_origins = 'http://localhost:8000,http://localhost:5173'
+_origins = os.environ.get('CSRF_TRUSTED_ORIGINS', _default_origins)
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in _origins.split(',') if o.strip()]
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

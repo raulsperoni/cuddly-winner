@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: 'IBM Plex Mono', monospace;
+        background: #09090b;
+        color: #e4e4e7;
+        -webkit-font-smoothing: antialiased;
+      }
+      .prose-font { font-family: 'Lora', serif; }
+      .tiptap { outline: none; min-height: 1.5em; }
+      .tiptap p { margin: 0 0 0.75em; }
+      .tiptap p:last-child { margin-bottom: 0; }
+      .tiptap strong { color: #f4f4f5; font-weight: 600; }
+      .tiptap em { color: #d4d4d8; font-style: italic; }
+      .tiptap ul, .tiptap ol { margin: 0 0 0.75em 1.5em; }
+      .tiptap li { margin-bottom: 0.25em; }
+      .tiptap h1, .tiptap h2, .tiptap h3 {
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 500;
+        margin: 0 0 0.5em;
+      }
+      .tiptap code {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.875em;
+        background: rgba(255,255,255,0.06);
+        padding: 0.1em 0.3em;
+        border-radius: 3px;
+      }
+      .tiptap blockquote {
+        border-left: 2px solid #52525b;
+        padding-left: 1em;
+        margin: 0 0 0.75em;
+        color: #a1a1aa;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

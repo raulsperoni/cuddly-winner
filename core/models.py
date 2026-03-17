@@ -19,6 +19,7 @@ class Document(models.Model):
         User, on_delete=models.CASCADE, related_name='documents'
     )
     public_token = models.UUIDField(default=uuid.uuid4, unique=True)
+    invite_token = models.UUIDField(default=uuid.uuid4, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -47,6 +48,30 @@ class Block(models.Model):
 
     def pending_suggestions(self):
         return self.suggestions.filter(status=Suggestion.STATUS_PENDING)
+
+
+class DocumentMembership(models.Model):
+    ROLE_COLLABORATOR = 'collaborator'
+    ROLE_CHOICES = [
+        (ROLE_COLLABORATOR, 'Collaborator'),
+    ]
+
+    document = models.ForeignKey(
+        Document, on_delete=models.CASCADE, related_name='memberships'
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='document_memberships'
+    )
+    role = models.CharField(
+        max_length=20, choices=ROLE_CHOICES, default=ROLE_COLLABORATOR
+    )
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [['document', 'user']]
+
+    def __str__(self):
+        return f'{self.user.username} on {self.document_id} ({self.role})'
 
 
 class BlockVersion(models.Model):

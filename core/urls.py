@@ -1,14 +1,28 @@
 from django.urls import path
 from . import views
 
+# SPA routes — React Router handles client-side navigation.
+# Django just needs to serve the shell for every entry point.
+spa = views.spa_shell
+
 urlpatterns = [
-    path('', views.home, name='home'),
-    path('documents/new/', views.document_create, name='document_create'),
+    # --- React SPA entry points ---
+    path('', spa, name='home'),
+    path('documents/new/', spa, name='document_create'),
+    path('documents/<int:pk>/', spa, name='document_detail'),
     path(
-        'documents/<int:pk>/',
-        views.document_detail,
-        name='document_detail',
+        'documents/<int:pk>/edit/',
+        views.document_editor_spa,
+        name='document_editor_spa',
     ),
+    path('documents/<int:pk>/history/', spa, name='document_history'),
+    path(
+        'join/<uuid:invite_token>/',
+        views.join_document,
+        name='document_join',
+    ),
+
+    # --- HTMX block mutation endpoints (still active) ---
     path(
         'documents/<int:pk>/blocks/add/',
         views.block_add,
@@ -56,11 +70,8 @@ urlpatterns = [
         views.snapshot_export,
         name='snapshot_export',
     ),
-    path(
-        'documents/<int:pk>/history/',
-        views.document_history,
-        name='document_history',
-    ),
+
+    # --- Public read-only (stays as Django template) ---
     path(
         'p/<uuid:token>/',
         views.document_public,

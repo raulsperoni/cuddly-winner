@@ -6,6 +6,7 @@ from core.models import (
     BlockVersion,
     Decision,
     Document,
+    DocumentMembership,
     Snapshot,
     Suggestion,
 )
@@ -73,16 +74,25 @@ class BlockSerializer(serializers.ModelSerializer):
 
 class DocumentSerializer(serializers.ModelSerializer):
     block_count = serializers.SerializerMethodField()
+    access_role = serializers.SerializerMethodField()
+    owner_username = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
         fields = [
             'id', 'title', 'description', 'status',
-            'created_at', 'updated_at', 'public_token', 'block_count',
+            'created_at', 'updated_at', 'public_token', 'invite_token',
+            'block_count', 'access_role', 'owner_username',
         ]
 
     def get_block_count(self, obj):
         return obj.blocks.count()
+
+    def get_access_role(self, obj):
+        return getattr(obj, 'access_role', 'owner')
+
+    def get_owner_username(self, obj):
+        return obj.created_by.username
 
 
 class DocumentDetailSerializer(DocumentSerializer):
@@ -113,6 +123,17 @@ class SnapshotSerializer(serializers.ModelSerializer):
             'id', 'version_number', 'text', 'metadata',
             'github_commit_sha', 'github_repo', 'created_at',
         ]
+
+
+class MembershipSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DocumentMembership
+        fields = ['user_id', 'username', 'role', 'joined_at']
+
+    def get_username(self, obj):
+        return obj.user.username
 
 
 class PublicBlockSerializer(serializers.ModelSerializer):
