@@ -1,133 +1,66 @@
-# Spec-Driven Development
+# Product Specs
 
-## Spec format
+This document captures the current product-level rules. The API-specific
+details and acceptance tests live in `design/SPECS.md`.
 
-Each spec defines:
-
-* user story
-* rules
-* acceptance criteria
-
----
-
-## Spec 001 — Create document
-
-User creates a drafting workspace.
-
-Acceptance criteria:
-
-* title required
-* document created
-* first block created
-* audit event recorded
-
----
-
-## Spec 002 — Edit block
-
-User edits paragraph.
-
-Acceptance criteria:
-
-* new block version created
-* previous version preserved
-* audit event recorded
-
----
-
-## Spec 003 — AI suggestion
-
-User requests AI rewrite.
-
-Acceptance criteria:
-
-* suggestion created
-* original text unchanged
-* suggestion visible in UI
-
----
-
-## Spec 004 — Accept suggestion
-
-User accepts AI suggestion.
-
-Acceptance criteria:
-
-* new block version created
-* decision recorded
-* lineage preserved
-
----
-
-## Spec 005 — Reject suggestion
-
-User rejects AI suggestion.
-
-Acceptance criteria:
-
-* suggestion marked rejected
-* no change to canonical block
-
----
-
-## Spec 006 — Snapshot export
-
-User exports document snapshot.
-
-Acceptance criteria:
-
-* snapshot created
-* markdown generated
-* metadata generated
-* git export possible
-
----
-
-## Spec 007 — Lineage inspection
-
-User inspects paragraph history.
-
-Acceptance criteria:
-
-* version chain visible
-* AI contributions labeled
-* human approvals visible
-
----
-
-## Spec 008 — Git export
-
-User exports snapshot to Git.
-
-Acceptance criteria:
-
-* snapshot committed
-* metadata included
-* commit message generated
-
----
-
-## Spec 009 — Permissions
-
-Roles:
+## Roles
 
 ```
 owner
-contributor
-viewer
+collaborator
+public reader
 ```
 
-Owner decides suggestions.
+- Owner is implicit via `Document.created_by`
+- Collaborator is granted through `DocumentMembership`
+- Public reader is anyone with `/p/<public_token>/`
 
----
+## Core rules
 
-## Spec 010 — Activity timeline
+### Spec 001 — Accountable edits
 
-User can inspect document history.
+- Document text is composed of ordered blocks.
+- Editing canonical text always creates a new `BlockVersion`.
+- Previous versions remain preserved.
+- Canonical text never changes without an attributable human action.
 
-Acceptance criteria:
+### Spec 002 — AI suggestions are proposals
 
-* events listed
-* chronological order
-* linked to blocks
+- AI output is stored as `Suggestion`, never applied directly.
+- A suggestion must remain pending until a human explicitly accepts or rejects it.
+- Accepted or rejected suggestions must always have a `Decision`.
 
+### Spec 003 — Paragraph-level lineage
+
+- Users can inspect version history per block.
+- AI-authored versions must be visibly labeled.
+- Human approvals and rejections must remain inspectable after the fact.
+
+### Spec 004 — Auditability
+
+- Significant document events are recorded as `AuditEvent`s.
+- History is chronological and attributable to a user when applicable.
+
+### Spec 005 — Sharing model
+
+- Read-only sharing uses `/p/<public_token>/` and never grants edit access.
+- Collaboration sharing uses `/join/<invite_token>/`.
+- Visiting the join link while authenticated grants collaborator access.
+- Visiting the join link while unauthenticated redirects through signup/login first.
+
+### Spec 006 — Permission boundaries
+
+- Owners can edit, manage document metadata, create snapshots, export to GitHub,
+  and manage collaborators.
+- Collaborators can edit blocks and resolve AI suggestions.
+- Public readers can only read.
+
+### Spec 007 — Export snapshots
+
+- Snapshots are owner-only.
+- Snapshot export produces a stable document artifact suitable for GitHub.
+
+### Spec 008 — Authenticated app surface
+
+- Authenticated document workflows are served through the React SPA.
+- The Django-rendered UI is limited to public read-only pages and auth pages.

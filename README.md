@@ -21,7 +21,7 @@ AI suggestions behave like pull requests: proposed changes that a human must exp
 |---|---|
 | Backend | Django 5 + Django REST Framework + PostgreSQL |
 | Auth | django-allauth (username + email) |
-| Legacy editor | HTMX + Alpine.js + Tailwind CDN |
+| Public reader | React SPA route backed by the public API |
 | React SPA | Vite + React + TypeScript + react-router-dom + TipTap + Zustand |
 | LLM | [OpenRouter](https://openrouter.ai) (`anthropic/claude-sonnet-4-5` by default) |
 | Deploy | Railway (migrations run automatically on deploy) |

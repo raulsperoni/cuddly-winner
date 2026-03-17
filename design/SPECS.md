@@ -2,9 +2,9 @@
 
 ## Status
 
-This document extends `docs/specs.md` with new and revised specs covering
-the DRF API layer and React SPA frontend. Specs 001–010 from the original
-document remain valid; this document adds specs 011–025.
+This document defines the implementation-facing specs for the DRF API and
+React SPA. It supersedes outdated assumptions from the original MVP where
+they conflict with the current product.
 
 The core invariant across all specs:
 
@@ -16,8 +16,11 @@ The core invariant across all specs:
 
 ## Existing specs (001–010) — status
 
-All original specs remain valid and their acceptance criteria are unchanged.
-The DRF API layer must satisfy all of them in addition to the new specs below.
+The original product rules still apply at a high level, but the current
+implementation differs in two important ways:
+
+- authenticated editing is SPA-first, not HTMX-first
+- document access includes collaborators, not only owners
 
 ---
 
@@ -26,14 +29,17 @@ The DRF API layer must satisfy all of them in addition to the new specs below.
 User retrieves their document list via the API.
 
 Rules:
-- Only documents owned by the authenticated user are returned
+- Documents owned by the authenticated user are returned
+- Documents shared with the authenticated user as a collaborator are returned
 - Response includes: `id`, `title`, `description`, `status`, `created_at`,
-  `updated_at`, `public_token`, `block_count` (derived)
+  `updated_at`, `public_token`, `invite_token`, `block_count`, `access_role`,
+  `owner_username`
 
 Acceptance criteria:
-- `GET /api/v1/documents/` returns 200 with paginated document list
-- Documents from other users are not included
-- Unauthenticated request returns 401
+- `GET /api/v1/documents/` returns 200 with document list
+- Documents from unrelated users are not included
+- Owned and collaborator documents are distinguishable in the response
+- Unauthenticated request returns 401 or 403
 
 ---
 
@@ -50,7 +56,7 @@ Acceptance criteria:
 - `GET /api/v1/documents/{id}/` returns document + blocks + current versions
   + pending suggestions in a single response
 - Blocks are ordered by `position`
-- Foreign document returns 403
+- Unrelated document returns 404
 
 ---
 

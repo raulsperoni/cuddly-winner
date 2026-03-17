@@ -4,6 +4,7 @@ import type {
   CurrentUser,
   Document,
   Member,
+  PublicDocument,
   Snapshot,
   Suggestion,
 } from './types'
@@ -24,7 +25,7 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(url, {
     ...options,
     headers,
-    credentials: 'same-origin',
+    credentials: options.credentials ?? 'same-origin',
   })
   if (!res.ok) {
     const body = await res.text().catch(() => res.statusText)
@@ -150,4 +151,10 @@ export const api = {
     }),
 
   getMe: (): Promise<CurrentUser> => request('/api/v1/auth/me/'),
+
+  getPublicDocument: (token: string): Promise<PublicDocument> =>
+    request(`/api/v1/public/${token}/`, {
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'omit',
+    }),
 }

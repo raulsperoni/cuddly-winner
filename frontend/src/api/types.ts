@@ -62,6 +62,22 @@ export interface CurrentUser {
   email: string
 }
 
+export interface PublicBlock {
+  id: number
+  position: number
+  current_version: {
+    text: string
+    author_type: 'human' | 'ai'
+  } | null
+}
+
+export interface PublicDocument {
+  id: number
+  title: string
+  description: string
+  blocks: PublicBlock[]
+}
+
 export interface AuditEvent {
   id: number
   event_type: string

@@ -73,7 +73,7 @@ DRF REST API mounted at `/api/v1/`. All endpoints use `SessionAuthentication`. K
 
 Two layers coexist:
 
-**Legacy HTMX views** — Tailwind CSS via CDN, HTMX for dynamic interactions, Alpine.js for lightweight JS. No build step. Used only for the public read-only view (`/p/<token>/`).
+**Public read-only view** — React route backed by `/api/v1/public/<token>/`. Served through the same SPA shell as other frontend routes.
 
 **React SPA** (`frontend/`) — Vite + React + TypeScript + react-router-dom. All authenticated routes are served by the `spa_shell` Django view (login_required) via `core/templates/core/document_editor_shell.html`. The shell injects `CURRENT_USER = {username}` as a global; document IDs are resolved client-side via `useParams()`. The SPA calls the DRF API under `/api/v1/`. Production assets build to `staticfiles/frontend/assets/`.
 

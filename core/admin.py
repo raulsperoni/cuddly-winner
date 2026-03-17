@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (
-    Document, Block, BlockVersion, Suggestion,
+    Document, DocumentMembership, Block, BlockVersion, Suggestion,
     Decision, Snapshot, AuditEvent,
 )
 
@@ -10,6 +10,13 @@ class DocumentAdmin(admin.ModelAdmin):
     list_display = ['title', 'status', 'created_by', 'created_at']
     list_filter = ['status']
     search_fields = ['title', 'description']
+
+
+@admin.register(DocumentMembership)
+class DocumentMembershipAdmin(admin.ModelAdmin):
+    list_display = ['document', 'user', 'role', 'joined_at']
+    list_filter = ['role']
+    search_fields = ['document__title', 'user__username', 'user__email']
 
 
 @admin.register(Block)

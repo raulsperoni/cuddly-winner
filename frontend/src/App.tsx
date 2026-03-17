@@ -3,6 +3,7 @@ import { DocumentList } from './pages/DocumentList'
 import { DocumentCreate } from './pages/DocumentCreate'
 import { DocumentEditor } from './pages/DocumentEditor'
 import { DocumentHistory } from './pages/DocumentHistory'
+import { PublicDocument } from './pages/PublicDocument'
 
 declare global {
   interface Window {
@@ -21,6 +22,8 @@ const router = createBrowserRouter([
   { path: '/documents/:id/edit/', element: <DocumentEditor /> },
   { path: '/documents/:id/history', element: <DocumentHistory /> },
   { path: '/documents/:id/history/', element: <DocumentHistory /> },
+  { path: '/p/:token', element: <PublicDocument /> },
+  { path: '/p/:token/', element: <PublicDocument /> },
 ])
 
 export default function App() {

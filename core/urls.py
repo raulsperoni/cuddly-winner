@@ -22,59 +22,10 @@ urlpatterns = [
         name='document_join',
     ),
 
-    # --- HTMX block mutation endpoints (still active) ---
-    path(
-        'documents/<int:pk>/blocks/add/',
-        views.block_add,
-        name='block_add',
-    ),
-    path(
-        'documents/<int:pk>/blocks/<int:block_pk>/edit/',
-        views.block_edit,
-        name='block_edit',
-    ),
-    path(
-        'documents/<int:pk>/blocks/<int:block_pk>/suggest/',
-        views.block_suggest,
-        name='block_suggest',
-    ),
-    path(
-        'documents/<int:pk>/blocks/<int:block_pk>/cancel/',
-        views.block_cancel,
-        name='block_cancel',
-    ),
-    path(
-        'documents/<int:pk>/blocks/<int:block_pk>/split/',
-        views.block_split,
-        name='block_split',
-    ),
-    path(
-        'documents/<int:pk>/blocks/<int:block_pk>'
-        '/suggestions/<int:suggestion_pk>/accept/',
-        views.suggestion_accept,
-        name='suggestion_accept',
-    ),
-    path(
-        'documents/<int:pk>/blocks/<int:block_pk>'
-        '/suggestions/<int:suggestion_pk>/reject/',
-        views.suggestion_reject,
-        name='suggestion_reject',
-    ),
-    path(
-        'documents/<int:pk>/snapshot/',
-        views.snapshot_create,
-        name='snapshot_create',
-    ),
-    path(
-        'documents/<int:pk>/snapshots/<int:snapshot_pk>/export/',
-        views.snapshot_export,
-        name='snapshot_export',
-    ),
-
-    # --- Public read-only (stays as Django template) ---
+    # --- Public SPA entry point ---
     path(
         'p/<uuid:token>/',
-        views.document_public,
+        views.public_spa_shell,
         name='document_public',
     ),
 ]
