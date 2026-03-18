@@ -6,4 +6,8 @@ WORKERS="${GUNICORN_WORKERS:-2}"
 
 exec poetry run gunicorn cuddly_winner.wsgi:application \
   --bind "0.0.0.0:${PORT_TO_BIND}" \
-  --workers "${WORKERS}"
+  --workers "${WORKERS}" \
+  --access-logfile - \
+  --error-logfile - \
+  --capture-output \
+  --log-level info
