@@ -36,6 +36,13 @@ def document(user):
 
 
 @pytest.fixture
+def onboarding_document(document):
+    document.is_onboarding = True
+    document.save()
+    return document
+
+
+@pytest.fixture
 def block(document, user):
     b = Block.objects.create(
         document=document, position=0, created_by=user
@@ -601,7 +608,7 @@ class TestBlockVersionHistory:
         assert data[0]['text'] == 'Initial text'
         assert data[1]['text'] == 'v2'
 
-    def test_unauthenticated_returns_403(
+    def test_unauthenticated_returns_404_for_non_onboarding(
         self, client, document, block
     ):
         url = (
@@ -609,7 +616,7 @@ class TestBlockVersionHistory:
             f'/blocks/{block.pk}/versions/'
         )
         resp = client.get(url)
-        assert resp.status_code in (401, 403)
+        assert resp.status_code == 404
 
 
 # --- Spec 019: document audit timeline ---
@@ -638,9 +645,11 @@ class TestDocumentHistory:
         assert data[0]['id'] == e1.pk
         assert data[1]['id'] == e2.pk
 
-    def test_unauthenticated_returns_403(self, client, document):
+    def test_unauthenticated_returns_404_for_non_onboarding(
+        self, client, document
+    ):
         resp = client.get(f'/api/v1/documents/{document.pk}/history/')
-        assert resp.status_code in (401, 403)
+        assert resp.status_code == 404
 
     def test_collaborator_can_view_history(
         self, collaborator_client, document, collaborator_membership
@@ -719,6 +728,133 @@ class TestPublicDocument:
         data = resp.json()
         b = data['blocks'][0]
         assert 'pending_suggestions' not in b
+
+
+@pytest.mark.django_db
+class TestOnboardingDocument:
+    def test_onboarding_endpoint_returns_single_doc(
+        self, client, onboarding_document
+    ):
+        resp = client.get('/api/v1/onboarding-document/')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['id'] == onboarding_document.pk
+        assert data['is_onboarding'] is True
+        assert 'invite_token' not in data
+        assert data['access_role'] == 'onboarding_guest'
+
+    def test_guest_detail_hides_pending_suggestions(
+        self, client, onboarding_document, block, pending_suggestion
+    ):
+        resp = client.get(f'/api/v1/documents/{onboarding_document.pk}/')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['access_role'] == 'onboarding_guest'
+        assert data['can_edit'] is False
+        assert data['can_decide'] is False
+        assert data['can_request_suggestions'] is True
+        assert data['blocks'][0]['pending_suggestions'] == []
+
+    def test_guest_can_create_public_suggestion(
+        self, client, onboarding_document, block, monkeypatch
+    ):
+        monkeypatch.setattr(
+            'services.llm.get_suggestion',
+            lambda block, stype, instruction='': 'Public suggestion',
+        )
+        url = (
+            f'/api/v1/documents/{onboarding_document.pk}'
+            f'/blocks/{block.pk}/suggestions/'
+        )
+        resp = client.post(
+            url,
+            {'suggestion_type': 'improve'},
+            content_type='application/json',
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data['origin'] == Suggestion.ORIGIN_PUBLIC
+        suggestion = Suggestion.objects.get(pk=data['id'])
+        assert suggestion.origin == Suggestion.ORIGIN_PUBLIC
+        event = AuditEvent.objects.filter(
+            event_type=AuditEvent.EVT_SUGGESTION_CREATED
+        ).latest('created_at')
+        assert event.data['origin'] == Suggestion.ORIGIN_PUBLIC
+
+    def test_guest_cannot_list_pending_suggestions(
+        self, client, onboarding_document, block, pending_suggestion
+    ):
+        resp = client.get(
+            f'/api/v1/documents/{onboarding_document.pk}/blocks/{block.pk}/suggestions/'
+        )
+        assert resp.status_code == 403
+
+    def test_logged_in_non_member_cannot_edit_onboarding_doc(
+        self, collaborator_client, onboarding_document, block
+    ):
+        resp = collaborator_client.patch(
+            f'/api/v1/documents/{onboarding_document.pk}/blocks/{block.pk}/',
+            {'text': 'Nope'},
+            content_type='application/json',
+        )
+        assert resp.status_code == 403
+
+    def test_logged_in_non_member_cannot_accept_suggestions(
+        self, collaborator_client, onboarding_document, block, pending_suggestion
+    ):
+        resp = collaborator_client.post(
+            (
+                f'/api/v1/documents/{onboarding_document.pk}/blocks/{block.pk}'
+                f'/suggestions/{pending_suggestion.pk}/accept/'
+            ),
+            {},
+            content_type='application/json',
+        )
+        assert resp.status_code == 403
+
+    def test_guest_history_is_trimmed_public_safe(
+        self, client, onboarding_document, user
+    ):
+        AuditEvent.objects.create(
+            document=onboarding_document,
+            event_type=AuditEvent.EVT_SUGGESTION_CREATED,
+            actor=None,
+            data={
+                'suggestion_type': 'improve',
+                'instruction': 'internal only',
+                'origin': 'public',
+            },
+        )
+        AuditEvent.objects.create(
+            document=onboarding_document,
+            event_type=AuditEvent.EVT_SNAPSHOT_CREATED,
+            actor=user,
+            data={'version_number': 1},
+        )
+        resp = client.get(f'/api/v1/documents/{onboarding_document.pk}/history/')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]['data'] == {
+            'suggestion_type': 'improve',
+            'origin': 'public',
+        }
+
+    def test_guest_can_view_block_versions_on_onboarding_doc(
+        self, client, onboarding_document, block, user
+    ):
+        BlockVersion.objects.create(
+            block=block,
+            text='Second version',
+            author_type=BlockVersion.AUTHOR_HUMAN,
+            author=user,
+            is_current=True,
+        )
+        resp = client.get(
+            f'/api/v1/documents/{onboarding_document.pk}/blocks/{block.pk}/versions/'
+        )
+        assert resp.status_code == 200
+        assert len(resp.json()) == 2
 
 
 # --- Spec 025: no Decision-less AI BlockVersions ---
@@ -921,6 +1057,14 @@ class TestSpaShellRoutes:
         assert resp.status_code == 200
         assert b'id="root"' in resp.content
 
-    def test_unauthenticated_home_redirects(self, client):
+    def test_unauthenticated_onboarding_editor_route_renders_shell(
+        self, client, onboarding_document
+    ):
+        resp = client.get(f'/documents/{onboarding_document.pk}/edit/')
+        assert resp.status_code == 200
+        assert b'id="root"' in resp.content
+
+    def test_unauthenticated_home_renders_spa(self, client):
         resp = client.get('/')
-        assert resp.status_code == 302
+        assert resp.status_code == 200
+        assert b'id="root"' in resp.content

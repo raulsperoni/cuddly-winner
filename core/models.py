@@ -1,5 +1,7 @@
 import uuid
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import User
 
 
@@ -20,8 +22,36 @@ class Document(models.Model):
     )
     public_token = models.UUIDField(default=uuid.uuid4, unique=True)
     invite_token = models.UUIDField(default=uuid.uuid4, unique=True)
+    is_onboarding = models.BooleanField(
+        default=False,
+        help_text=(
+            'Superuser-only. Pins this document as the public onboarding '
+            'entry point and allows anonymous suggestion requests.'
+        ),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['is_onboarding'],
+                condition=Q(is_onboarding=True),
+                name='unique_onboarding_document',
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        if not self.is_onboarding:
+            return
+        existing = Document.objects.filter(is_onboarding=True)
+        if self.pk:
+            existing = existing.exclude(pk=self.pk)
+        if existing.exists():
+            raise ValidationError({
+                'is_onboarding': 'Only one onboarding document may be enabled at a time.',
+            })
 
     def __str__(self):
         return self.title
@@ -126,6 +156,12 @@ class Suggestion(models.Model):
         (STATUS_ACCEPTED, 'Accepted'),
         (STATUS_REJECTED, 'Rejected'),
     ]
+    ORIGIN_MEMBER = 'member'
+    ORIGIN_PUBLIC = 'public'
+    ORIGIN_CHOICES = [
+        (ORIGIN_MEMBER, 'Member'),
+        (ORIGIN_PUBLIC, 'Public'),
+    ]
     block = models.ForeignKey(
         Block, on_delete=models.CASCADE, related_name='suggestions'
     )
@@ -136,6 +172,9 @@ class Suggestion(models.Model):
     instruction = models.TextField(blank=True)
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING
+    )
+    origin = models.CharField(
+        max_length=20, choices=ORIGIN_CHOICES, default=ORIGIN_MEMBER
     )
     created_at = models.DateTimeField(auto_now_add=True)
 

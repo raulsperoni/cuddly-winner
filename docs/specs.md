@@ -76,7 +76,7 @@ public reader
 
 ## Extended specifications
 
-Spec 010 is reserved. Specs 011–022 are in `docs/specs/`:
+Spec 010 is reserved. Specs 011–023 are in `docs/specs/`:
 
 | Spec | Title |
 |------|-------|
@@ -92,6 +92,7 @@ Spec 010 is reserved. Specs 011–022 are in `docs/specs/`:
 | [020](specs/020-viewer-role.md) | Viewer Role |
 | [021](specs/021-enhanced-public-view.md) | Enhanced Public Read-Only View |
 | [022](specs/022-snapshot-public-url.md) | Snapshot Stable Public URL |
+| [023](specs/023-onboarding-document.md) | Onboarding Document |
 
 ## Current implementation constraints
 

@@ -22,9 +22,18 @@ const LineagePanel = lazy(() =>
 interface Props {
   block: Block
   documentId: number
+  canEdit?: boolean
+  canDecide?: boolean
+  canSuggest?: boolean
 }
 
-export function BlockItem({ block, documentId }: Props) {
+export function BlockItem({
+  block,
+  documentId,
+  canEdit = true,
+  canDecide = true,
+  canSuggest = true,
+}: Props) {
   const { t } = useLocale()
   const [hovered, setHovered] = useState(false)
   const [customOpen, setCustomOpen] = useState(false)
@@ -129,25 +138,29 @@ export function BlockItem({ block, documentId }: Props) {
                   : 'opacity-0 pointer-events-none'
               }`}
             >
-              {suggestionTypes.map(({ key, label }) => (
+              {canSuggest
+                ? suggestionTypes.map(({ key, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => handleRequestSuggestion(key)}
+                      className="px-2 py-0.5 text-[11px] font-mono rounded-sm transition-colors [color:var(--text-subtle)] hover:[color:var(--accent)] hover:[background:var(--accent-soft)]"
+                    >
+                      {label}
+                    </button>
+                  ))
+                : null}
+              {canSuggest ? (
                 <button
-                  key={key}
-                  onClick={() => handleRequestSuggestion(key)}
+                  onClick={() => setCustomOpen((v) => !v)}
                   className="px-2 py-0.5 text-[11px] font-mono rounded-sm transition-colors [color:var(--text-subtle)] hover:[color:var(--accent)] hover:[background:var(--accent-soft)]"
                 >
-                  {label}
+                  {t('askAi')}
                 </button>
-              ))}
-              <button
-                onClick={() => setCustomOpen((v) => !v)}
-                className="px-2 py-0.5 text-[11px] font-mono rounded-sm transition-colors [color:var(--text-subtle)] hover:[color:var(--accent)] hover:[background:var(--accent-soft)]"
-              >
-                {t('askAi')}
-              </button>
+              ) : null}
             </div>
           </div>
 
-          {customOpen && !isEditing && (
+          {canSuggest && customOpen && !isEditing && (
             <form
               onSubmit={handleCustomSubmit}
               className="mb-2 flex items-center gap-2"
@@ -188,8 +201,8 @@ export function BlockItem({ block, documentId }: Props) {
             <BlockEditor
               blockId={block.id}
               text={block.current_version?.text ?? ''}
-              isEditing={isEditing}
-              onStartEdit={() => setEditingBlock(block.id)}
+              isEditing={isEditing && canEdit}
+              onStartEdit={() => canEdit && setEditingBlock(block.id)}
               onSave={handleSave}
               onCancel={handleCancel}
               hasPendingSuggestions={hasPending}
@@ -227,6 +240,7 @@ export function BlockItem({ block, documentId }: Props) {
             block={block}
             documentId={documentId}
             suggestions={pendingSuggestions}
+            canDecide={canDecide}
           />
         </Suspense>
       )}

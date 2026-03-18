@@ -7,9 +7,18 @@ from .models import (
 
 @admin.register(Document)
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ['title', 'status', 'created_by', 'created_at']
-    list_filter = ['status']
+    list_display = ['title', 'status', 'is_onboarding', 'created_by', 'created_at']
+    list_filter = ['status', 'is_onboarding']
     search_fields = ['title', 'description']
+
+    def get_readonly_fields(self, request, obj=None):
+        if not request.user.is_superuser:
+            return ['is_onboarding']
+        return []
+
+    def save_model(self, request, obj, form, change):
+        obj.full_clean()
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(DocumentMembership)
@@ -35,8 +44,8 @@ class BlockVersionAdmin(admin.ModelAdmin):
 
 @admin.register(Suggestion)
 class SuggestionAdmin(admin.ModelAdmin):
-    list_display = ['id', 'block', 'suggestion_type', 'status', 'created_at']
-    list_filter = ['suggestion_type', 'status']
+    list_display = ['id', 'block', 'suggestion_type', 'origin', 'status', 'created_at']
+    list_filter = ['suggestion_type', 'origin', 'status']
 
 
 @admin.register(Decision)

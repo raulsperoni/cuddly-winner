@@ -1,7 +1,13 @@
 /**
  * UX audit — paragraph editing experience.
  * Produces named, viewport-quality screenshots for UX review.
- * Run: node scripts/visual_audit.mjs  (from project root)
+ *
+ * Requires a Django server with the built frontend:
+ *   npm run build           (from frontend/)
+ *   python manage.py collectstatic --noinput
+ *   DEBUG=False python manage.py runserver 127.0.0.1:9000 --noreload
+ *
+ * Then run: node scripts/visual_audit.mjs  (from project root)
  */
 
 import { chromium } from 'playwright'
@@ -13,7 +19,7 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const OUT = path.join(__dirname, 'screenshots')
 
-const BASE = 'http://localhost:5173'
+const BASE = 'http://127.0.0.1:9000'
 const USERNAME = 'raulsperoni'
 const PASSWORD = 'testpass123'
 const DOC_ID = 10   // 'memoria' — 16 paragraphs, has a seeded pending suggestion
@@ -114,10 +120,16 @@ const browser = await chromium.launch({ headless: true })
   await page.waitForTimeout(200)
   const askBtn = page.locator('.group').nth(1).locator('button').filter({ hasText: /ask ai/i })
   if (await askBtn.isVisible().catch(() => false)) {
-    await askBtn.click()
+    await askBtn.click({ force: true })
     await page.waitForTimeout(300)
     await el(page, '.group', '06_block_ask_ai_form', 1)
-    await page.locator('.group').nth(1).locator('button').filter({ hasText: /cancel/i }).click()
+    // Dismiss the ask AI form (try cancel button, fall back to Escape)
+    const cancelBtn = page.locator('.group').nth(1).locator('button').filter({ hasText: /cancel/i })
+    if (await cancelBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+      await cancelBtn.click({ force: true })
+    } else {
+      await page.keyboard.press('Escape')
+    }
     await page.waitForTimeout(150)
   }
 

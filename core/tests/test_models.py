@@ -44,6 +44,18 @@ class TestDocument:
     def test_str(self, document):
         assert str(document) == 'Test Document'
 
+    def test_only_one_onboarding_document_allowed(self, user, document):
+        document.is_onboarding = True
+        document.save()
+        other = Document(
+            title='Second onboarding',
+            description='Another test',
+            created_by=user,
+            is_onboarding=True,
+        )
+        with pytest.raises(Exception):
+            other.full_clean()
+
 
 @pytest.mark.django_db
 class TestBlockAndVersion:
@@ -87,6 +99,7 @@ class TestSuggestion:
             text='Rewritten text',
         )
         assert s.status == Suggestion.STATUS_PENDING
+        assert s.origin == Suggestion.ORIGIN_MEMBER
         assert list(block.pending_suggestions()) == [s]
 
     def test_accept(self, block):

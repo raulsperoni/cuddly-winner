@@ -16,10 +16,12 @@ export default defineConfig({
     },
   },
   server: {
+    port: 5173,
+    strictPort: true,
     proxy: {
       '/api': 'http://127.0.0.1:8000',
       '/accounts': 'http://127.0.0.1:8000',
-      '/static': 'http://127.0.0.1:8000',
+      '/static/core': 'http://127.0.0.1:8000',
       '/admin': 'http://127.0.0.1:8000',
       '/p/': 'http://127.0.0.1:8000',
       '/join/': 'http://127.0.0.1:8000',

@@ -6,7 +6,7 @@ import { BRAND_NAME } from '../../lib/brand'
 
 interface ShareProps {
   readOnlyPath: string
-  invitePath: string
+  invitePath?: string
   members?: Member[]
   canManageMembers?: boolean
   onRemoveMember?: (userId: number) => Promise<void>
@@ -166,7 +166,9 @@ function SharePopover({
   const { t } = useLocale()
   const ref = useRef<HTMLDivElement>(null)
   const readOnlyLink = buildAbsoluteUrl(share.readOnlyPath)
-  const inviteLink = buildAbsoluteUrl(share.invitePath)
+  const inviteLink = share.invitePath
+    ? buildAbsoluteUrl(share.invitePath)
+    : null
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -192,11 +194,13 @@ function SharePopover({
           value={readOnlyLink}
           note={t('readingLinkNote')}
         />
-        <CopyField
-          label={t('editingInvite')}
-          value={inviteLink}
-          note={t('editingInviteNote')}
-        />
+        {inviteLink ? (
+          <CopyField
+            label={t('editingInvite')}
+            value={inviteLink}
+            note={t('editingInviteNote')}
+          />
+        ) : null}
         <MemberList
           members={share.members ?? []}
           canManageMembers={share.canManageMembers}

@@ -1,3 +1,16 @@
+export interface DocumentCard {
+  id: number
+  title: string
+  description: string
+  status: string
+  created_at: string
+  updated_at: string
+  is_onboarding: boolean
+  block_count: number
+  access_role: 'owner' | 'collaborator' | 'onboarding_guest'
+  owner_username: string
+}
+
 export interface BlockVersion {
   id: number
   text: string
@@ -21,6 +34,7 @@ export interface Suggestion {
   instruction: string
   text: string
   status: 'pending' | 'accepted' | 'rejected'
+  origin: 'member' | 'public'
   created_at: string
 }
 
@@ -32,18 +46,12 @@ export interface Block {
   created_at: string
 }
 
-export interface Document {
-  id: number
-  title: string
-  description: string
-  status: string
-  created_at: string
-  updated_at: string
+export interface Document extends DocumentCard {
   public_token: string
   invite_token: string
-  block_count: number
-  access_role: 'owner' | 'collaborator'
-  owner_username: string
+  can_edit: boolean
+  can_decide: boolean
+  can_request_suggestions: boolean
   blocks?: Block[]
 }
 

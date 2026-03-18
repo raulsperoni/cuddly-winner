@@ -124,14 +124,14 @@
     </script>
     {% if debug %}
     <script type="module">
-      import RefreshRuntime from 'http://localhost:5173/@react-refresh'
+      import RefreshRuntime from 'http://localhost:5173/static/frontend/@react-refresh'
       RefreshRuntime.injectIntoGlobalHook(window)
       window.$RefreshReg$ = () => {}
       window.$RefreshSig$ = () => (type) => type
       window.__vite_plugin_react_preamble_installed__ = true
     </script>
-    <script type="module" src="http://localhost:5173/@vite/client"></script>
-    <script type="module" src="http://localhost:5173/src/main.tsx"></script>
+    <script type="module" src="http://localhost:5173/static/frontend/@vite/client"></script>
+    <script type="module" src="http://localhost:5173/static/frontend/src/main.tsx"></script>
     {% else %}
     <script type="module" src="/static/frontend/assets/main.js"></script>
     {% endif %}

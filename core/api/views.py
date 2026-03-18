@@ -28,7 +28,9 @@ from core.api.serializers import (
     DocumentDetailSerializer,
     DocumentSerializer,
     MembershipSerializer,
+    OnboardingDocumentSerializer,
     PublicDocumentSerializer,
+    PublicAuditEventSerializer,
     SnapshotSerializer,
     SuggestionSerializer,
 )
@@ -39,21 +41,60 @@ logger = logging.getLogger(__name__)
 
 def _get_accessible_document(pk, user):
     doc = get_object_or_404(Document, pk=pk)
-    if doc.created_by_id == user.id:
-        doc.access_role = 'owner'
-        return doc, 'owner'
-    membership = DocumentMembership.objects.filter(
-        document=doc, user=user
-    ).first()
-    if membership:
-        doc.access_role = membership.role
-        return doc, membership.role
+    if user.is_authenticated:
+        if doc.created_by_id == user.id:
+            doc.access_role = 'owner'
+            return doc, 'owner'
+        membership = DocumentMembership.objects.filter(
+            document=doc, user=user
+        ).first()
+        if membership:
+            doc.access_role = membership.role
+            return doc, membership.role
+    if doc.is_onboarding:
+        doc.access_role = 'onboarding_guest'
+        return doc, 'onboarding_guest'
     raise Http404
 
 
 def _require_owner(doc, role):
     if role != 'owner':
         raise PermissionDenied('Owner access required')
+
+
+def _require_can_edit(doc, role):
+    if role not in {'owner', 'collaborator'}:
+        raise PermissionDenied('Editing access required')
+
+
+def _require_can_decide(doc, role):
+    if role not in {'owner', 'collaborator'}:
+        raise PermissionDenied('Review access required')
+
+
+def _require_can_request_suggestions(doc, role):
+    if role in {'owner', 'collaborator'}:
+        return
+    if role == 'onboarding_guest' and doc.is_onboarding:
+        return
+    raise PermissionDenied('Suggestion access required')
+
+
+def _include_pending_suggestions(role):
+    return role != 'onboarding_guest'
+
+
+def _public_history_events(doc):
+    return doc.audit_events.filter(
+        event_type__in=[
+            AuditEvent.EVT_DOCUMENT_CREATED,
+            AuditEvent.EVT_BLOCK_CREATED,
+            AuditEvent.EVT_BLOCK_EDITED,
+            AuditEvent.EVT_SUGGESTION_CREATED,
+            AuditEvent.EVT_SUGGESTION_ACCEPTED,
+            AuditEvent.EVT_SUGGESTION_REJECTED,
+        ]
+    ).order_by('created_at')
 
 
 def _get_block(document, block_pk):
@@ -143,12 +184,17 @@ class DocumentListCreateView(APIView):
 
 class DocumentDetailView(APIView):
     authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, pk):
         try:
-            doc, _role = _get_accessible_document(pk, request.user)
-            return Response(DocumentDetailSerializer(doc).data)
+            doc, role = _get_accessible_document(pk, request.user)
+            return Response(DocumentDetailSerializer(
+                doc,
+                context={
+                    'include_pending_suggestions': _include_pending_suggestions(role),
+                },
+            ).data)
         except Exception:
             logger.exception(
                 'Failed document detail response',
@@ -161,6 +207,8 @@ class DocumentDetailView(APIView):
             raise
 
     def patch(self, request, pk):
+        if not request.user.is_authenticated:
+            raise PermissionDenied('Authentication required')
         doc, role = _get_accessible_document(pk, request.user)
         _require_owner(doc, role)
         allowed = {'title', 'description', 'status'}
@@ -173,10 +221,13 @@ class DocumentDetailView(APIView):
 
 class DocumentHistoryView(APIView):
     authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, pk):
-        doc, _role = _get_accessible_document(pk, request.user)
+        doc, role = _get_accessible_document(pk, request.user)
+        if role == 'onboarding_guest':
+            events = _public_history_events(doc)
+            return Response(PublicAuditEventSerializer(events, many=True).data)
         events = doc.audit_events.order_by('created_at')
         return Response(AuditEventSerializer(events, many=True).data)
 
@@ -186,15 +237,24 @@ class DocumentHistoryView(APIView):
 
 class BlockListCreateView(APIView):
     authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, pk):
-        doc, _role = _get_accessible_document(pk, request.user)
+        doc, role = _get_accessible_document(pk, request.user)
         blocks = doc.blocks.order_by('position')
-        return Response(BlockSerializer(blocks, many=True).data)
+        return Response(BlockSerializer(
+            blocks,
+            many=True,
+            context={
+                'include_pending_suggestions': _include_pending_suggestions(role),
+            },
+        ).data)
 
     def post(self, request, pk):
-        doc, _role = _get_accessible_document(pk, request.user)
+        if not request.user.is_authenticated:
+            raise PermissionDenied('Authentication required')
+        doc, role = _get_accessible_document(pk, request.user)
+        _require_can_edit(doc, role)
         text = request.data.get('text', '')
         position = request.data.get(
             'position',
@@ -231,7 +291,8 @@ class BlockReorderView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
-        doc, _role = _get_accessible_document(pk, request.user)
+        doc, role = _get_accessible_document(pk, request.user)
+        _require_can_edit(doc, role)
         # expects: {"order": [block_id, block_id, ...]}
         order = request.data.get('order', [])
         if not isinstance(order, list):
@@ -257,15 +318,23 @@ class BlockReorderView(APIView):
 
 class BlockDetailView(APIView):
     authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, pk, block_pk):
-        doc, _role = _get_accessible_document(pk, request.user)
+        doc, role = _get_accessible_document(pk, request.user)
         block = _get_block(doc, block_pk)
-        return Response(BlockSerializer(block).data)
+        return Response(BlockSerializer(
+            block,
+            context={
+                'include_pending_suggestions': _include_pending_suggestions(role),
+            },
+        ).data)
 
     def patch(self, request, pk, block_pk):
-        doc, _role = _get_accessible_document(pk, request.user)
+        if not request.user.is_authenticated:
+            raise PermissionDenied('Authentication required')
+        doc, role = _get_accessible_document(pk, request.user)
+        _require_can_edit(doc, role)
         block = _get_block(doc, block_pk)
         text = request.data.get('text')
         if text is None:
@@ -295,7 +364,8 @@ class BlockDetailView(APIView):
         return Response(BlockSerializer(block).data)
 
     def delete(self, request, pk, block_pk):
-        doc, _role = _get_accessible_document(pk, request.user)
+        doc, role = _get_accessible_document(pk, request.user)
+        _require_can_edit(doc, role)
         block = _get_block(doc, block_pk)
         block.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -306,7 +376,8 @@ class BlockSplitView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk, block_pk):
-        doc, _role = _get_accessible_document(pk, request.user)
+        doc, role = _get_accessible_document(pk, request.user)
+        _require_can_edit(doc, role)
         block = _get_block(doc, block_pk)
         first_text = request.data.get('first_text', '')
         second_text = request.data.get('second_text', '')
@@ -355,7 +426,7 @@ class BlockSplitView(APIView):
 
 class BlockVersionListView(APIView):
     authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, pk, block_pk):
         doc, _role = _get_accessible_document(pk, request.user)
@@ -371,10 +442,12 @@ class BlockVersionListView(APIView):
 
 class SuggestionListCreateView(APIView):
     authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, pk, block_pk):
-        doc, _role = _get_accessible_document(pk, request.user)
+        doc, role = _get_accessible_document(pk, request.user)
+        if role == 'onboarding_guest':
+            raise PermissionDenied('Pending suggestions are not public')
         block = _get_block(doc, block_pk)
         suggestions = block.pending_suggestions()
         return Response(
@@ -382,7 +455,8 @@ class SuggestionListCreateView(APIView):
         )
 
     def post(self, request, pk, block_pk):
-        doc, _role = _get_accessible_document(pk, request.user)
+        doc, role = _get_accessible_document(pk, request.user)
+        _require_can_request_suggestions(doc, role)
         block = _get_block(doc, block_pk)
         suggestion_type = request.data.get('suggestion_type')
         valid_types = [
@@ -421,15 +495,21 @@ class SuggestionListCreateView(APIView):
             instruction=instruction,
             text=text,
             status=Suggestion.STATUS_PENDING,
+            origin=(
+                Suggestion.ORIGIN_PUBLIC
+                if role == 'onboarding_guest'
+                else Suggestion.ORIGIN_MEMBER
+            ),
         )
         AuditEvent.objects.create(
             document=doc,
             event_type=AuditEvent.EVT_SUGGESTION_CREATED,
-            actor=request.user,
+            actor=request.user if request.user.is_authenticated else None,
             block=block,
             data={
                 'suggestion_type': suggestion_type,
                 'instruction': instruction,
+                'origin': suggestion.origin,
             },
         )
         return Response(
@@ -443,7 +523,8 @@ class SuggestionAcceptView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk, block_pk, suggestion_pk):
-        doc, _role = _get_accessible_document(pk, request.user)
+        doc, role = _get_accessible_document(pk, request.user)
+        _require_can_decide(doc, role)
         block = _get_block(doc, block_pk)
         suggestion = _get_suggestion(block, suggestion_pk)
         if suggestion.status != Suggestion.STATUS_PENDING:
@@ -484,7 +565,8 @@ class SuggestionAcceptWithEditsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk, block_pk, suggestion_pk):
-        doc, _role = _get_accessible_document(pk, request.user)
+        doc, role = _get_accessible_document(pk, request.user)
+        _require_can_decide(doc, role)
         block = _get_block(doc, block_pk)
         suggestion = _get_suggestion(block, suggestion_pk)
         if suggestion.status != Suggestion.STATUS_PENDING:
@@ -537,7 +619,8 @@ class SuggestionRejectView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk, block_pk, suggestion_pk):
-        doc, _role = _get_accessible_document(pk, request.user)
+        doc, role = _get_accessible_document(pk, request.user)
+        _require_can_decide(doc, role)
         block = _get_block(doc, block_pk)
         suggestion = _get_suggestion(block, suggestion_pk)
         if suggestion.status != Suggestion.STATUS_PENDING:
@@ -681,6 +764,30 @@ class PublicDocumentView(APIView):
     def get(self, request, token):
         doc = get_object_or_404(Document, public_token=token)
         return Response(PublicDocumentSerializer(doc).data)
+
+
+class OnboardingDocumentView(APIView):
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        doc = Document.objects.filter(is_onboarding=True).select_related(
+            'created_by'
+        ).first()
+        if not doc:
+            raise Http404
+        if request.user.is_authenticated:
+            if doc.created_by_id == request.user.id:
+                doc.access_role = 'owner'
+            elif DocumentMembership.objects.filter(
+                document=doc, user=request.user
+            ).exists():
+                doc.access_role = 'collaborator'
+            else:
+                doc.access_role = 'onboarding_guest'
+        else:
+            doc.access_role = 'onboarding_guest'
+        return Response(OnboardingDocumentSerializer(doc).data)
 
 
 class DocumentMemberListView(APIView):

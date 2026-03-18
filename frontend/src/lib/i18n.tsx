@@ -44,6 +44,7 @@ const translations = {
     owner: 'owner',
     shared: 'shared',
     collaborator: 'collaborator',
+    guest: 'guest',
     sharedBy: ({ owner_username = '' }) => `shared by ${owner_username}`,
     paragraphsCount: ({ count = 0 }) =>
       `${count} paragraph${Number(count) === 1 ? '' : 's'}`,
@@ -130,6 +131,10 @@ const translations = {
     sharedDocument: 'Shared document',
     publicDocumentIntro:
       'This link is for reading and circulation. Sign in to join the drafting team when you have an editing invite.',
+    onboardingGuestIntro:
+      'You are exploring the onboarding document. You can request AI suggestions and inspect history, but you cannot directly edit the canonical text.',
+    startHere: 'Start here',
+    howItWorks: 'How it works',
     failedToLoadPublicDocument: ({ error = '' }) =>
       `Failed to load public document: ${error}`,
     noParagraphsYet: 'No paragraphs yet.',
@@ -187,6 +192,7 @@ const translations = {
     owner: 'propietario',
     shared: 'compartido',
     collaborator: 'colaborador',
+    guest: 'invitado',
     sharedBy: ({ owner_username = '' }) => `compartido por ${owner_username}`,
     paragraphsCount: ({ count = 0 }) =>
       `${count} párrafo${Number(count) === 1 ? '' : 's'}`,
@@ -273,6 +279,10 @@ const translations = {
     sharedDocument: 'Documento compartido',
     publicDocumentIntro:
       'Este enlace es para lectura y circulación. Inicia sesión para unirte al equipo de redacción cuando tengas una invitación de edición.',
+    onboardingGuestIntro:
+      'Estás explorando el documento de onboarding. Puedes pedir sugerencias de IA y ver el historial, pero no editar directamente el texto canónico.',
+    startHere: 'Empieza aquí',
+    howItWorks: 'Cómo funciona',
     failedToLoadPublicDocument: ({ error = '' }) =>
       `No se pudo cargar el documento público: ${error}`,
     noParagraphsYet: 'Todavía no hay párrafos.',

@@ -12,9 +12,15 @@ interface Props {
   block: Block
   documentId: number
   suggestions: Suggestion[]
+  canDecide?: boolean
 }
 
-export function SuggestionPanel({ block, documentId, suggestions }: Props) {
+export function SuggestionPanel({
+  block,
+  documentId,
+  suggestions,
+  canDecide = true,
+}: Props) {
   const { t } = useLocale()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [editingAcceptance, setEditingAcceptance] = useState(false)
@@ -157,7 +163,14 @@ export function SuggestionPanel({ block, documentId, suggestions }: Props) {
       )}
 
       <div className="flex items-center gap-2 px-4 py-3 border-t [border-color:var(--border-subtle)] [background:var(--surface-2)]">
-        {!editingAcceptance ? (
+        {!canDecide ? (
+          <span className="text-xs font-mono [color:var(--text-subtle)]">
+            <a href="/accounts/login/" className="underline [color:var(--text-muted)] hover:[color:var(--text-main)]">
+              Sign in
+            </a>{' '}
+            to approve or reject this suggestion.
+          </span>
+        ) : !editingAcceptance ? (
           <>
             <button
               onClick={handleAccept}

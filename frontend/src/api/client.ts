@@ -2,6 +2,7 @@ import type {
   Block,
   BlockVersion,
   CurrentUser,
+  DocumentCard,
   Document,
   Member,
   PublicDocument,
@@ -93,7 +94,20 @@ export const api = {
   getVersions: (docId: number, blockId: number): Promise<BlockVersion[]> =>
     request(`/api/v1/documents/${docId}/blocks/${blockId}/versions/`),
 
-  listDocuments: (): Promise<Document[]> => request('/api/v1/documents/'),
+  listDocuments: (): Promise<DocumentCard[]> => request('/api/v1/documents/'),
+
+  getOnboardingDocument: async (): Promise<DocumentCard | null> => {
+    try {
+      return await request('/api/v1/onboarding-document/', {
+        credentials: 'same-origin',
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('404:')) {
+        return null
+      }
+      throw error
+    }
+  },
 
   createDocument: (data: {
     title: string

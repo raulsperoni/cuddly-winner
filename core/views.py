@@ -1,7 +1,6 @@
 import html
 
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -25,30 +24,36 @@ def _get_document_access(document, user):
     return None
 
 
-@login_required
 def spa_shell(request, **kwargs):
     return render(
         request,
         'core/document_editor_shell.html',
         {
             'debug': settings.DEBUG,
-            'current_username': request.user.username,
+            'current_username': (
+                request.user.username if request.user.is_authenticated else ''
+            ),
         },
     )
 
 
-@login_required
 def document_editor_spa(request, pk):
     doc = get_object_or_404(Document, pk=pk)
-    if not _get_document_access(doc, request.user):
-        return HttpResponse('Forbidden', status=403)
+    if request.user.is_authenticated:
+        if not _get_document_access(doc, request.user) and not doc.is_onboarding:
+            return HttpResponse('Forbidden', status=403)
+    elif not doc.is_onboarding:
+        login_url = reverse('account_login')
+        return redirect(f'{login_url}?next={request.path}')
     return render(
         request,
         'core/document_editor_shell.html',
         {
             'document': doc,
             'debug': settings.DEBUG,
-            'current_username': request.user.username,
+            'current_username': (
+                request.user.username if request.user.is_authenticated else ''
+            ),
         },
     )
 

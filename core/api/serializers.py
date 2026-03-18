@@ -54,7 +54,7 @@ class SuggestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Suggestion
         fields = [
-            'id', 'suggestion_type', 'instruction', 'text', 'status',
+            'id', 'suggestion_type', 'instruction', 'text', 'status', 'origin',
             'created_at',
         ]
 
@@ -77,8 +77,10 @@ class BlockSerializer(serializers.ModelSerializer):
         return None
 
     def get_pending_suggestions(self, obj):
+        if not self.context.get('include_pending_suggestions', True):
+            return []
         return SuggestionSerializer(
-            obj.pending_suggestions(), many=True
+            obj.pending_suggestions(), many=True, context=self.context
         ).data
 
 
@@ -86,13 +88,17 @@ class DocumentSerializer(serializers.ModelSerializer):
     block_count = serializers.SerializerMethodField()
     access_role = serializers.SerializerMethodField()
     owner_username = serializers.SerializerMethodField()
+    can_edit = serializers.SerializerMethodField()
+    can_decide = serializers.SerializerMethodField()
+    can_request_suggestions = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
         fields = [
             'id', 'title', 'description', 'status',
             'created_at', 'updated_at', 'public_token', 'invite_token',
-            'block_count', 'access_role', 'owner_username',
+            'is_onboarding', 'block_count', 'access_role', 'owner_username',
+            'can_edit', 'can_decide', 'can_request_suggestions',
         ]
 
     def get_block_count(self, obj):
@@ -104,12 +110,30 @@ class DocumentSerializer(serializers.ModelSerializer):
     def get_owner_username(self, obj):
         return obj.created_by.username
 
+    def get_can_edit(self, obj):
+        return getattr(obj, 'access_role', 'owner') in {'owner', 'collaborator'}
+
+    def get_can_decide(self, obj):
+        return getattr(obj, 'access_role', 'owner') in {'owner', 'collaborator'}
+
+    def get_can_request_suggestions(self, obj):
+        return getattr(obj, 'access_role', 'owner') in {
+            'owner', 'collaborator', 'onboarding_guest'
+        }
+
 
 class DocumentDetailSerializer(DocumentSerializer):
-    blocks = BlockSerializer(many=True, read_only=True)
+    blocks = serializers.SerializerMethodField()
 
     class Meta(DocumentSerializer.Meta):
         fields = DocumentSerializer.Meta.fields + ['blocks']
+
+    def get_blocks(self, obj):
+        return BlockSerializer(
+            obj.blocks.order_by('position'),
+            many=True,
+            context=self.context,
+        ).data
 
 
 class AuditEventSerializer(serializers.ModelSerializer):
@@ -124,6 +148,31 @@ class AuditEventSerializer(serializers.ModelSerializer):
 
     def get_actor_username(self, obj):
         return obj.actor.username if obj.actor else None
+
+
+class PublicAuditEventSerializer(serializers.ModelSerializer):
+    actor_username = serializers.SerializerMethodField()
+    data = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AuditEvent
+        fields = [
+            'id', 'event_type', 'actor_username',
+            'block_id', 'data', 'created_at',
+        ]
+
+    def get_actor_username(self, obj):
+        return obj.actor.username if obj.actor else None
+
+    def get_data(self, obj):
+        allowed = {}
+        if 'suggestion_type' in obj.data:
+            allowed['suggestion_type'] = obj.data['suggestion_type']
+        if 'decision_type' in obj.data:
+            allowed['decision_type'] = obj.data['decision_type']
+        if 'origin' in obj.data:
+            allowed['origin'] = obj.data['origin']
+        return allowed
 
 
 class SnapshotSerializer(serializers.ModelSerializer):
@@ -174,3 +223,26 @@ class PublicDocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = ['id', 'title', 'description', 'blocks']
+
+
+class OnboardingDocumentSerializer(serializers.ModelSerializer):
+    block_count = serializers.SerializerMethodField()
+    access_role = serializers.SerializerMethodField()
+    owner_username = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Document
+        fields = [
+            'id', 'title', 'description', 'status',
+            'created_at', 'updated_at', 'is_onboarding',
+            'block_count', 'access_role', 'owner_username',
+        ]
+
+    def get_block_count(self, obj):
+        return obj.blocks.count()
+
+    def get_access_role(self, obj):
+        return getattr(obj, 'access_role', 'onboarding_guest')
+
+    def get_owner_username(self, obj):
+        return obj.created_by.username

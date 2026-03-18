@@ -85,20 +85,25 @@ export function DocumentEditor() {
     (sum, b) => sum + (b.pending_suggestions?.length ?? 0),
     0,
   )
+  const isOnboardingGuest = document.access_role === 'onboarding_guest'
 
   return (
     <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-main)]">
       <NavBar
         back={{ to: '/', label: t('documents') }}
         title={document.title}
-        share={{
-          readOnlyPath: `/p/${document.public_token}/`,
-          invitePath: `/join/${document.invite_token}/`,
-          members,
-          canManageMembers: document.access_role === 'owner',
-          onRemoveMember:
-            document.access_role === 'owner' ? handleRemoveMember : undefined,
-        }}
+        share={
+          isOnboardingGuest
+            ? undefined
+            : {
+                readOnlyPath: `/p/${document.public_token}/`,
+                invitePath: `/join/${document.invite_token}/`,
+                members,
+                canManageMembers: document.access_role === 'owner',
+                onRemoveMember:
+                  document.access_role === 'owner' ? handleRemoveMember : undefined,
+              }
+        }
         actions={
           <div className="flex items-center gap-2">
             {pendingCount > 0 && (
@@ -125,10 +130,16 @@ export function DocumentEditor() {
               className={`hidden sm:inline px-1.5 py-0.5 text-xs font-mono rounded-sm border ${
                 document.access_role === 'owner'
                   ? '[border-color:var(--border-strong)] [color:var(--text-muted)]'
-                  : '[border-color:var(--accent)] [color:var(--accent)]'
+                  : isOnboardingGuest
+                    ? '[border-color:var(--border-subtle)] [color:var(--text-subtle)]'
+                    : '[border-color:var(--accent)] [color:var(--accent)]'
               }`}
             >
-              {document.access_role === 'owner' ? t('owner') : t('collaborator')}
+              {document.access_role === 'owner'
+                ? t('owner')
+                : isOnboardingGuest
+                  ? t('guest')
+                  : t('collaborator')}
             </span>
             <span className="hidden sm:inline text-xs font-mono [color:var(--text-subtle)]">
               {t('paragraphsCount', { count: blocks.length })}
@@ -159,8 +170,32 @@ export function DocumentEditor() {
         </div>
       )}
 
+      {isOnboardingGuest && (
+        <div className="max-w-4xl mx-auto px-6 pt-4">
+          <div className="flex items-center justify-between gap-4 rounded-2xl px-4 py-3 [border:1px_solid_var(--border-subtle)] [background:var(--surface-2)]">
+            <span className="text-xs font-mono [color:var(--text-muted)]">
+              {t('onboardingGuestIntro')}
+            </span>
+            {!window.CURRENT_USER?.username ? (
+              <a
+                href="/accounts/login/"
+                className="flex-shrink-0 px-3 py-1.5 text-xs font-mono rounded-sm border transition-colors [background:var(--text-main)] [border-color:var(--text-main)] text-[var(--app-bg)] hover:opacity-90"
+              >
+                {t('signIn')}
+              </a>
+            ) : null}
+          </div>
+        </div>
+      )}
+
       <main className="max-w-4xl mx-auto px-6 py-8">
-        <BlockList blocks={blocks} documentId={documentId} />
+        <BlockList
+          blocks={blocks}
+          documentId={documentId}
+          canEdit={document.can_edit}
+          canDecide={document.can_decide}
+          canSuggest={document.can_request_suggestions}
+        />
       </main>
 
       {document.access_role === 'owner' ? (

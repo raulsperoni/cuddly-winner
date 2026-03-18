@@ -102,6 +102,11 @@ urlpatterns = [
         views.PublicDocumentView.as_view(),
         name='api-public-document',
     ),
+    path(
+        'onboarding-document/',
+        views.OnboardingDocumentView.as_view(),
+        name='api-onboarding-document',
+    ),
 
     # Auth
     path(
