@@ -4,7 +4,6 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "./start-web.sh",
     "healthcheckPath": "/health/",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",
