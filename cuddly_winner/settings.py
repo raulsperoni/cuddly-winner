@@ -20,6 +20,8 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 _default_hosts = '127.0.0.1,localhost'
 _allowed = os.environ.get('ALLOWED_HOSTS', _default_hosts)
 ALLOWED_HOSTS = [h.strip() for h in _allowed.split(',') if h.strip()]
+if 'healthcheck.railway.app' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('healthcheck.railway.app')
 
 _default_origins = 'http://localhost:8000,http://localhost:5173'
 _origins = os.environ.get('CSRF_TRUSTED_ORIGINS', _default_origins)

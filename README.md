@@ -95,14 +95,15 @@ poetry run pytest
 GitHub Actions runs the pipeline in
 [.github/workflows/ci-cd.yml](./.github/workflows/ci-cd.yml).
 
-On pull requests to `main`, CI does three things:
+On pull requests and pushes to `main`, CI does three things:
 
 - runs Django system checks and backend tests against Postgres
 - builds the React frontend
 - builds the production Docker image
 
-On pushes to `main`, the same checks run first, then the workflow deploys to
-Railway with the `RAILWAY_TOKEN` GitHub secret.
+This workflow is CI-only. Deployment is handled by Railway's GitHub
+integration, so each push to `main` produces a single Railway deploy instead of
+one deploy from Railway plus another from GitHub Actions.
 
 ## Deploy to Railway
 
@@ -151,7 +152,8 @@ Notes:
 
 ### 3. Deploy
 
-Railway will use the Dockerfile automatically. The deploy flow is:
+Enable Railway auto-deploy for the connected GitHub repo. Railway will use the
+Dockerfile automatically. The deploy flow is:
 
 1. Install Python dependencies with Poetry
 2. Install frontend dependencies with `npm ci`
