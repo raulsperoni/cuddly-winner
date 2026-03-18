@@ -4,7 +4,7 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "poetry run python manage.py migrate --noinput && poetry run gunicorn cuddly_winner.wsgi:application --bind 0.0.0.0:$PORT --workers 2",
+    "startCommand": "./entrypoint.sh poetry run gunicorn cuddly_winner.wsgi:application --bind 0.0.0.0:$PORT --workers 2",
     "healthcheckPath": "/health/",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",

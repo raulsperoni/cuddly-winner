@@ -1,3 +1,13 @@
+FROM node:20-slim AS frontend-build
+
+WORKDIR /app/frontend
+
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -18,10 +28,12 @@ COPY pyproject.toml poetry.lock* ./
 RUN poetry install --only=main --no-root
 
 COPY . .
+COPY --from=frontend-build /app/staticfiles/frontend ./staticfiles/frontend
 
 RUN poetry run python manage.py collectstatic --noinput \
-    --settings=cuddly_winner.settings \
-    || true
+    --settings=cuddly_winner.settings
+
+ENTRYPOINT ["./entrypoint.sh"]
 
 EXPOSE 8000
 CMD ["poetry", "run", "gunicorn", "cuddly_winner.wsgi:application", \
