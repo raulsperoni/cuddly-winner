@@ -10,4 +10,5 @@ def app_i18n(request):
     return {
         'current_language': language,
         'app_t': app_t,
+        'app_ai_traceability': translate(language, 'ai_traceability'),
     }

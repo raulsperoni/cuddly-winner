@@ -38,7 +38,7 @@ export function BlockItem({
   const [hovered, setHovered] = useState(false)
   const [customOpen, setCustomOpen] = useState(false)
   const [customInstruction, setCustomInstruction] = useState('')
-  const { updateBlock, addSuggestionToBlock } = useDocumentStore()
+  const { updateBlock, addSuggestionToBlock, removeBlock } = useDocumentStore()
   const {
     editingBlockId,
     loadingBlockIds,
@@ -67,6 +67,12 @@ export function BlockItem({
   }
 
   const handleCancel = () => setEditingBlock(null)
+
+  const handleDelete = async () => {
+    await api.deleteBlock(documentId, block.id)
+    removeBlock(block.id)
+    setEditingBlock(null)
+  }
 
   const handleRequestSuggestion = async (
     type: string,
@@ -204,6 +210,7 @@ export function BlockItem({
               isEditing={isEditing && canEdit}
               onStartEdit={() => canEdit && setEditingBlock(block.id)}
               onSave={handleSave}
+              onDelete={canEdit ? handleDelete : undefined}
               onCancel={handleCancel}
               hasPendingSuggestions={hasPending}
             />

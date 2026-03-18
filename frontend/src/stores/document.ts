@@ -7,6 +7,7 @@ interface DocumentState {
   error: string | null
   setDocument: (doc: Document) => void
   updateBlock: (block: Block) => void
+  removeBlock: (blockId: number) => void
   addSuggestionToBlock: (blockId: number, suggestion: Suggestion) => void
   setError: (e: string | null) => void
 }
@@ -25,6 +26,11 @@ export const useDocumentStore = create<DocumentState>((set) => ({
   updateBlock: (block) =>
     set((state) => ({
       blocks: state.blocks.map((b) => (b.id === block.id ? block : b)),
+    })),
+
+  removeBlock: (blockId) =>
+    set((state) => ({
+      blocks: state.blocks.filter((b) => b.id !== blockId),
     })),
 
   addSuggestionToBlock: (blockId, suggestion) =>

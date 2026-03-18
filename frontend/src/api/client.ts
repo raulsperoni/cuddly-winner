@@ -33,7 +33,9 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
     throw new Error(`${res.status}: ${body}`)
   }
   if (res.status === 204) return undefined as T
-  return res.json() as Promise<T>
+  const body = await res.text()
+  if (!body.trim()) return null as T
+  return JSON.parse(body) as T
 }
 
 export const api = {
@@ -44,6 +46,11 @@ export const api = {
     request(`/api/v1/documents/${docId}/blocks/${blockId}/`, {
       method: 'PATCH',
       body: JSON.stringify({ text }),
+    }),
+
+  deleteBlock: (docId: number, blockId: number): Promise<void> =>
+    request(`/api/v1/documents/${docId}/blocks/${blockId}/`, {
+      method: 'DELETE',
     }),
 
   createSuggestion: (
@@ -97,16 +104,9 @@ export const api = {
   listDocuments: (): Promise<DocumentCard[]> => request('/api/v1/documents/'),
 
   getOnboardingDocument: async (): Promise<DocumentCard | null> => {
-    try {
-      return await request('/api/v1/onboarding-document/', {
-        credentials: 'same-origin',
-      })
-    } catch (error) {
-      if (error instanceof Error && error.message.startsWith('404:')) {
-        return null
-      }
-      throw error
-    }
+    return request('/api/v1/onboarding-document/', {
+      credentials: 'same-origin',
+    })
   },
 
   createDocument: (data: {

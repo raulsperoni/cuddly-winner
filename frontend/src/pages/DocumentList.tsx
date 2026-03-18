@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { NavBar } from '../components/shared/NavBar'
 import type { DocumentCard } from '../api/types'
-import { BRAND_DOMAIN, BRAND_TAGLINE } from '../lib/brand'
+import { BRAND_DOMAIN } from '../lib/brand'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useLocale } from '../lib/i18n'
 
@@ -60,7 +60,7 @@ export function DocumentList() {
             {BRAND_DOMAIN}
           </div>
           <h1 className="max-w-2xl text-3xl prose-font leading-tight [color:var(--text-strong)]">
-            {BRAND_TAGLINE}
+            {t('brandTagline')}
           </h1>
           <p className="max-w-2xl text-sm leading-7 [color:var(--text-muted)]">
             {t('documentListIntro')}

@@ -6,7 +6,7 @@ import { Markdown } from 'tiptap-markdown'
 import { api } from '../api/client'
 import type { PublicBlock, PublicDocument as PublicDocumentType } from '../api/types'
 import { AuthorshipBadge } from '../components/shared/AuthorshipBadge'
-import { BRAND_DOMAIN, BRAND_NAME, BRAND_TAGLINE } from '../lib/brand'
+import { BRAND_DOMAIN, BRAND_NAME } from '../lib/brand'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useLocale } from '../lib/i18n'
 
@@ -25,9 +25,15 @@ function PublicBlockView({ block }: { block: PublicBlock }) {
     [block.id],
   )
 
+  const setMarkdownContent = (nextContent: string) => {
+    if (!editor) return
+    const parsed = editor.storage.markdown.parser.parse(nextContent || '')
+    editor.commands.setContent(parsed)
+  }
+
   useEffect(() => {
     if (!editor) return
-    editor.commands.setContent(content || '')
+    setMarkdownContent(content)
   }, [editor, content])
 
   return (
@@ -95,7 +101,7 @@ export function PublicDocument() {
               <h1 className="mt-2 text-3xl prose-font leading-tight [color:var(--text-strong)]">{t('sharedDocument')}</h1>
             )}
             <p className="mt-3 max-w-xl text-sm leading-7 [color:var(--text-muted)]">
-              {BRAND_TAGLINE}. {t('publicDocumentIntro')}
+              {t('brandTagline')}. {t('publicDocumentIntro')}
             </p>
           </div>
           <a

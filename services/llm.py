@@ -1,6 +1,7 @@
 import os
 
 from openai import OpenAI
+from openai import APITimeoutError
 from pydantic import BaseModel
 
 
@@ -10,9 +11,11 @@ class SuggestionOutput(BaseModel):
 
 
 def get_client():
+    timeout = float(os.environ.get('OPENROUTER_TIMEOUT_SECONDS', '20'))
     return OpenAI(
         api_key=os.environ.get('OPENROUTER_API_KEY', ''),
         base_url='https://openrouter.ai/api/v1',
+        timeout=timeout,
     )
 
 
@@ -71,23 +74,28 @@ def get_suggestion(
         raw = response.choices[0].message.content
         output = SuggestionOutput.model_validate_json(raw)
         return output.text
+    except APITimeoutError:
+        return ''
     except Exception:
         # Fall back: plain text request without structured output
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {
-                    'role': 'system',
-                    'content': (
-                        'You are a professional editor helping draft policy '
-                        'and political documents. Return only the revised '
-                        'paragraph text — you may use **bold**, *italic*, '
-                        'and simple lists where appropriate, but prefer '
-                        'prose; no headings, no HTML, no explanations.'
-                    ),
-                },
-                messages[1],
-            ],
-            max_tokens=1500,
-        )
-        return response.choices[0].message.content.strip()
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {
+                        'role': 'system',
+                        'content': (
+                            'You are a professional editor helping draft policy '
+                            'and political documents. Return only the revised '
+                            'paragraph text — you may use **bold**, *italic*, '
+                            'and simple lists where appropriate, but prefer '
+                            'prose; no headings, no HTML, no explanations.'
+                        ),
+                    },
+                    messages[1],
+                ],
+                max_tokens=1500,
+            )
+            return response.choices[0].message.content.strip()
+        except APITimeoutError:
+            return ''

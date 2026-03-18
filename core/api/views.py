@@ -775,7 +775,7 @@ class OnboardingDocumentView(APIView):
             'created_by'
         ).first()
         if not doc:
-            raise Http404
+            return Response(None)
         if request.user.is_authenticated:
             if doc.created_by_id == request.user.id:
                 doc.access_role = 'owner'
