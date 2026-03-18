@@ -1,9 +1,7 @@
 /**
- * Visual audit script — screenshots every screen at desktop + mobile.
- * Run: node scripts/visual_audit.mjs
- *
- * Requires Django on :8000 and Vite on :5173 (both running).
- * Screenshots saved to scripts/screenshots/.
+ * UX audit — paragraph editing experience.
+ * Produces named, viewport-quality screenshots for UX review.
+ * Run: node scripts/visual_audit.mjs  (from project root)
  */
 
 import { chromium } from 'playwright'
@@ -13,146 +11,188 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const OUT_DIR = path.join(__dirname, 'screenshots')
+const OUT = path.join(__dirname, 'screenshots')
 
-// Everything through Vite so session cookies share the same origin
 const BASE = 'http://localhost:5173'
 const USERNAME = 'raulsperoni'
 const PASSWORD = 'testpass123'
+const DOC_ID = 10   // 'memoria' — 16 paragraphs, has a seeded pending suggestion
 
-const VIEWPORTS = [
-  { name: 'desktop', width: 1280, height: 800 },
-  { name: 'tablet',  width: 768,  height: 1024 },
-  { name: 'mobile',  width: 390,  height: 844 },   // iPhone 14
-]
+if (!existsSync(OUT)) await mkdir(OUT, { recursive: true })
 
-async function shot(page, name) {
-  const file = path.join(OUT_DIR, `${name}.png`)
-  await page.screenshot({ path: file, fullPage: true })
-  console.log(`  ✓ ${name}.png`)
+// ── helpers ────────────────────────────────────────────────────────────────
+
+async function px(page, name) {
+  await page.screenshot({ path: path.join(OUT, `${name}.png`), fullPage: false })
+  console.log(`  ✓ ${name}`)
 }
 
-async function shotHeader(page, name) {
-  const file = path.join(OUT_DIR, `${name}.png`)
-  const header = page.locator('header').first()
-  await header.screenshot({ path: file })
-  console.log(`  ✓ ${name}.png`)
+async function el(locator, name) {
+  await locator.screenshot({ path: path.join(OUT, `${name}.png`) })
+  console.log(`  ✓ ${name}`)
 }
 
 async function login(page) {
   await page.goto(`${BASE}/accounts/login/`, { waitUntil: 'networkidle' })
-  // django-allauth uses "login" field name; fallback to "username"
   const field = page.locator('input[name="login"]').or(page.locator('input[name="username"]'))
   await field.fill(USERNAME)
   await page.fill('input[name="password"]', PASSWORD)
   await page.click('button[type="submit"]')
-  // Wait for redirect away from login page
-  await page.waitForURL((url) => !url.pathname.includes('login'), { timeout: 10000 })
+  await page.waitForURL(url => !url.pathname.includes('login'), { timeout: 10000 })
 }
 
-if (!existsSync(OUT_DIR)) await mkdir(OUT_DIR, { recursive: true })
+async function goEditor(page) {
+  await page.goto(`${BASE}/documents/${DOC_ID}/edit/`, { waitUntil: 'networkidle' })
+  await page.waitForTimeout(1200)
+}
+
+// ── run ────────────────────────────────────────────────────────────────────
 
 const browser = await chromium.launch({ headless: true })
 
-let firstDocId = null
-
-for (const vp of VIEWPORTS) {
-  const ctx = await browser.newContext({
-    viewport: { width: vp.width, height: vp.height },
-    deviceScaleFactor: 2,
-  })
+// ── DESKTOP dark ──────────────────────────────────────────────────────────
+{
+  console.log('\n── Desktop · dark ──')
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 })
   const page = await ctx.newPage()
-  // Surface any console errors
-  page.on('console', msg => {
-    if (msg.type() === 'error') console.log(`  [console.error] ${msg.text()}`)
-  })
-
-  console.log(`\n── ${vp.name} (${vp.width}×${vp.height}) ──`)
-
-  // ── 01 Login screen ────────────────────────────────────────────────────────
-  await page.goto(`${BASE}/accounts/login/`, { waitUntil: 'networkidle' })
-  await shot(page, `${vp.name}_01_login`)
-
   await login(page)
+  await goEditor(page)
 
-  // ── 02 Document list — served at / ────────────────────────────────────────
-  await page.goto(`${BASE}/`, { waitUntil: 'networkidle' })
-  await page.waitForTimeout(1000)
-  await shot(page, `${vp.name}_02_document_list`)
-  await shotHeader(page, `${vp.name}_02_nav`)
+  // 1 · Full editor viewport — document + nav overview
+  await px(page, '01_editor_overview')
 
-  // Grab first doc ID via API
-  if (!firstDocId) {
-    try {
-      const data = await page.evaluate(async () => {
-        const r = await fetch('/api/v1/documents/', { credentials: 'include' })
-        return r.json()
-      })
-      const docs = data.results ?? data
-      if (Array.isArray(docs) && docs.length > 0) firstDocId = docs[0].id
-    } catch (e) {
-      console.log(`  ⚠ Could not fetch docs: ${e.message}`)
-    }
+  // 2 · Just the two-row navbar in editor context
+  await el(page.locator('header').first(), '02_navbar_editor')
+
+  // 3 · Block list area (scroll-crop to first ~5 paragraphs)
+  const main = page.locator('main').first()
+  await el(main, '03_block_list')
+
+  // Use block index 1 (second block — no pending suggestion) for clean hover/edit demos
+  const blocks = page.locator('.group')
+  const demoBlock = blocks.nth(1)
+
+  // 4 · Block hovered — AI action buttons visible (clarify / rephrase / condense / expand / ask AI)
+  await demoBlock.hover()
+  await page.waitForTimeout(250)
+  await el(demoBlock, '04_block_hovered_actions')
+
+  // 5 · Block in edit mode (TipTap focused, surface-2 background, save/cancel)
+  await demoBlock.click()
+  await page.waitForTimeout(350)
+  await el(demoBlock, '05_block_editing')
+  await page.keyboard.press('Escape')
+  await page.waitForTimeout(200)
+
+  // 6 · Custom "Ask AI..." instruction form open on block 1
+  await demoBlock.hover()
+  await page.waitForTimeout(150)
+  const askBtn = demoBlock.locator('button').filter({ hasText: /ask ai/i })
+  if (await askBtn.isVisible()) {
+    await askBtn.click()
+    await page.waitForTimeout(250)
+    await el(demoBlock, '06_block_ask_ai_form')
+    // close form
+    await demoBlock.locator('button', { hasText: /cancel/i }).click()
+    await page.waitForTimeout(150)
   }
 
-  // ── 03 Create document form ────────────────────────────────────────────────
-  await page.goto(`${BASE}/documents/new/`, { waitUntil: 'networkidle' })
+  // 7 · Block with pending suggestion — accent highlight, pending review badge, action row
+  //     Block 0 has the seeded suggestion
+  const pendingBlock = blocks.first()
+  await pendingBlock.scrollIntoViewIfNeeded()
+  await pendingBlock.hover()
+  await page.waitForTimeout(200)
+  // Crop just the block header (above the suggestion panel) for the "pending state" shot
+  const blockHeader = pendingBlock.locator('.grid').first()
+  await el(blockHeader, '07_block_pending_state')
+
+  // 8 · Suggestion panel — full viewport showing current paragraph vs proposed revision
+  await px(page, '08_suggestion_panel_viewport')
+
+  // 9 · Suggestion panel detail crop (diff + approve / revise / reject buttons)
+  await el(pendingBlock, '09_suggestion_panel_full')
+
+  // 10 · Lineage panel open (version history of a block)
+  await goEditor(page)
   await page.waitForTimeout(600)
-  await shot(page, `${vp.name}_03_document_create`)
-
-  if (firstDocId) {
-    // ── 04 Document editor ───────────────────────────────────────────────────
-    await page.goto(`${BASE}/documents/${firstDocId}/edit/`, { waitUntil: 'networkidle' })
-    await page.waitForTimeout(1200)
-    await shot(page, `${vp.name}_04_document_editor`)
-    await shotHeader(page, `${vp.name}_04_nav`)
-
-    // ── 05 Share popover ─────────────────────────────────────────────────────
-    const shareBtn = page.locator('header button', { hasText: 'Share' })
-    if (await shareBtn.isVisible()) {
-      await shareBtn.click()
-      await page.waitForTimeout(400)
-      // Viewport-only shot so the popover is clearly visible
-      await page.screenshot({ path: path.join(OUT_DIR, `${vp.name}_05_share_popover.png`), fullPage: false })
-      console.log(`  ✓ ${vp.name}_05_share_popover.png`)
-      await page.mouse.click(10, 10)
-      await page.waitForTimeout(200)
-    } else {
-      console.log('  ⚠ Share button not visible')
-    }
-
-    // ── 06 Snapshot panel ────────────────────────────────────────────────────
-    // "Snapshots" toggle button in the NavBar actions area
-    const snapshotBtn = page.locator('header button', { hasText: /^snapshots$/i })
-    if (await snapshotBtn.isVisible()) {
-      await snapshotBtn.click()
-      await page.waitForTimeout(500)
-      await shot(page, `${vp.name}_06_snapshot_panel`)
-      await snapshotBtn.click()
-    }
-
-    // ── 07 Document history ──────────────────────────────────────────────────
-    await page.goto(`${BASE}/documents/${firstDocId}/history/`, { waitUntil: 'networkidle' })
-    await page.waitForTimeout(800)
-    await shot(page, `${vp.name}_07_document_history`)
-  } else {
-    console.log('  ⚠ No document ID — skipping editor/history screens')
+  const lineageToggle = page.locator('button', { hasText: /view history/i }).first()
+  if (await lineageToggle.isVisible()) {
+    await lineageToggle.click()
+    await page.waitForTimeout(400)
+    const lineageBlock = page.locator('.group').first()
+    await el(lineageBlock, '10_lineage_panel_open')
   }
 
-  // ── 08 Light mode ─────────────────────────────────────────────────────────
-  await page.goto(`${BASE}/`, { waitUntil: 'networkidle' })
-  await page.waitForTimeout(400)
-  const themeBtn = page.locator('header button[title*="light"], header button[title*="Light"]')
+  // 11 · Share popover
+  await page.goto(`${BASE}/documents/${DOC_ID}/edit/`, { waitUntil: 'networkidle' })
+  await page.waitForTimeout(800)
+  const shareBtn = page.locator('button', { hasText: /share/i }).first()
+  if (await shareBtn.isVisible()) {
+    await shareBtn.click()
+    await page.waitForTimeout(350)
+    await px(page, '11_share_popover')
+  }
+
+  // 12 · Light mode — editor overview
+  await page.mouse.click(10, 10) // close share
+  await page.waitForTimeout(200)
+  const themeBtn = page.locator('button[title*="light"], button[title*="Light"]').first()
   if (await themeBtn.isVisible()) {
     await themeBtn.click()
     await page.waitForTimeout(300)
-    await shot(page, `${vp.name}_08_document_list_light`)
-    const darkBtn = page.locator('header button[title*="dark"], header button[title*="Dark"]')
+    await px(page, '12_editor_light_mode')
+    // reset
+    const darkBtn = page.locator('button[title*="dark"], button[title*="Dark"]').first()
     if (await darkBtn.isVisible()) await darkBtn.click()
   }
 
   await ctx.close()
 }
 
+// ── MOBILE dark ───────────────────────────────────────────────────────────
+{
+  console.log('\n── Mobile · dark (390×844) ──')
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
+  const page = await ctx.newPage()
+  await login(page)
+  await goEditor(page)
+
+  // 13 · Mobile editor overview
+  await px(page, '13_mobile_editor_overview')
+
+  // 14 · Mobile navbar (two rows)
+  await el(page.locator('header').first(), '14_mobile_navbar')
+
+  // 15 · Mobile block area
+  await el(page.locator('main').first(), '15_mobile_block_list')
+
+  // 16 · Mobile block with pending suggestion
+  const pendingBlock = page.locator('.group').first()
+  await el(pendingBlock, '16_mobile_pending_block')
+
+  // 17 · Mobile suggestion panel viewport
+  await px(page, '17_mobile_suggestion_panel')
+
+  await ctx.close()
+}
+
+// ── TABLET dark ───────────────────────────────────────────────────────────
+{
+  console.log('\n── Tablet · dark (768×1024) ──')
+  const ctx = await browser.newContext({ viewport: { width: 768, height: 1024 }, deviceScaleFactor: 2 })
+  const page = await ctx.newPage()
+  await login(page)
+  await goEditor(page)
+
+  // 18 · Tablet editor overview
+  await px(page, '18_tablet_editor_overview')
+
+  // 19 · Tablet navbar
+  await el(page.locator('header').first(), '19_tablet_navbar')
+
+  await ctx.close()
+}
+
 await browser.close()
-console.log(`\n✓ Done — screenshots in ${OUT_DIR}`)
+console.log(`\n✓ Done — ${OUT}`)
