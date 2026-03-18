@@ -110,11 +110,13 @@ class Suggestion(models.Model):
     TYPE_IMPROVE = 'improve'
     TYPE_SHORTEN = 'shorten'
     TYPE_EXPAND = 'expand'
+    TYPE_CUSTOM = 'custom'
     SUGGESTION_TYPE_CHOICES = [
         (TYPE_REWRITE, 'Rewrite'),
         (TYPE_IMPROVE, 'Improve clarity'),
         (TYPE_SHORTEN, 'Shorten'),
         (TYPE_EXPAND, 'Expand'),
+        (TYPE_CUSTOM, 'Custom instruction'),
     ]
     STATUS_PENDING = 'pending'
     STATUS_ACCEPTED = 'accepted'
@@ -131,6 +133,7 @@ class Suggestion(models.Model):
         max_length=20, choices=SUGGESTION_TYPE_CHOICES
     )
     text = models.TextField()
+    instruction = models.TextField(blank=True)
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING
     )

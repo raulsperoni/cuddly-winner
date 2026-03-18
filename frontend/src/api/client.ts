@@ -49,10 +49,11 @@ export const api = {
     docId: number,
     blockId: number,
     suggestionType: string,
+    instruction = '',
   ): Promise<Suggestion> =>
     request(`/api/v1/documents/${docId}/blocks/${blockId}/suggestions/`, {
       method: 'POST',
-      body: JSON.stringify({ suggestion_type: suggestionType }),
+      body: JSON.stringify({ suggestion_type: suggestionType, instruction }),
     }),
 
   acceptSuggestion: (

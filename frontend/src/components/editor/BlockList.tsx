@@ -10,7 +10,7 @@ export function BlockList({ blocks, documentId }: Props) {
   if (blocks.length === 0) {
     return (
       <div className="text-center py-16">
-        <p className="text-sm font-mono [color:var(--text-subtle)]">No paragraphs yet.</p>
+        <p className="text-sm font-mono [color:var(--text-subtle)]">Start writing or paste your document here.</p>
       </div>
     )
   }

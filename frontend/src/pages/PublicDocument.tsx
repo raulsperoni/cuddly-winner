@@ -5,6 +5,9 @@ import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from 'tiptap-markdown'
 import { api } from '../api/client'
 import type { PublicBlock, PublicDocument as PublicDocumentType } from '../api/types'
+import { AuthorshipBadge } from '../components/shared/AuthorshipBadge'
+import { BRAND_DOMAIN, BRAND_NAME, BRAND_TAGLINE } from '../lib/brand'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 function PublicBlockView({ block }: { block: PublicBlock }) {
   const content = block.current_version?.text ?? ''
@@ -35,15 +38,11 @@ function PublicBlockView({ block }: { block: PublicBlock }) {
       <div>
         <div className="mb-3 flex items-center justify-between gap-3">
           {block.current_version ? (
-            <span
-              className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-mono ${
-                block.current_version.author_type === 'ai'
-                  ? '[border-color:var(--accent)] [background:var(--accent-soft)] [color:var(--accent)]'
-                  : '[border-color:var(--border-subtle)] [background:var(--surface-1)] [color:var(--text-muted)]'
-              }`}
-            >
-              {block.current_version.author_type === 'ai' ? 'Approved AI draft' : 'Human draft'}
-            </span>
+            <AuthorshipBadge
+              authorType={block.current_version.author_type}
+              approvedBy={block.current_version.approved_by}
+              decisionType={block.current_version.decision_type}
+            />
           ) : null}
         </div>
         {block.current_version ? (
@@ -65,6 +64,8 @@ export function PublicDocument() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
+  usePageTitle(document?.title ? `${document.title} · Shared draft` : 'Shared draft')
+
   useEffect(() => {
     if (!token) return
     api
@@ -80,7 +81,10 @@ export function PublicDocument() {
         <div className="mx-auto flex max-w-5xl items-start justify-between gap-4 px-6 py-5">
           <div className="max-w-2xl">
             <div className="text-[11px] font-mono uppercase tracking-[0.2em] [color:var(--text-subtle)]">
-              Shared drafting copy
+              {BRAND_DOMAIN}
+            </div>
+            <div className="mt-1 text-sm font-medium [color:var(--text-main)]">
+              {BRAND_NAME}
             </div>
             {document ? (
               <h1 className="mt-2 text-3xl prose-font leading-tight [color:var(--text-strong)]">{document.title}</h1>
@@ -88,7 +92,8 @@ export function PublicDocument() {
               <h1 className="mt-2 text-3xl prose-font leading-tight [color:var(--text-strong)]">Shared document</h1>
             )}
             <p className="mt-3 max-w-xl text-sm leading-7 [color:var(--text-muted)]">
-              This link is for reading and circulation. Sign in to join the drafting team when you have an editing invite.
+              {BRAND_TAGLINE}. This link is for reading and circulation. Sign in to join
+              the drafting team when you have an editing invite.
             </p>
           </div>
           <a

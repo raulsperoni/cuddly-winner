@@ -56,7 +56,7 @@ export function LineagePanel({ blockId, documentId, isOpen, onToggle }: Props) {
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
-        Review trail
+        View history
       </button>
 
       {isOpen && (

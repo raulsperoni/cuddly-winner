@@ -375,14 +375,21 @@ class SuggestionListCreateView(APIView):
             Suggestion.TYPE_IMPROVE,
             Suggestion.TYPE_SHORTEN,
             Suggestion.TYPE_EXPAND,
+            Suggestion.TYPE_CUSTOM,
         ]
         if suggestion_type not in valid_types:
             return Response(
                 {'detail': f'suggestion_type must be one of {valid_types}'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        instruction = request.data.get('instruction', '').strip()
+        if suggestion_type == Suggestion.TYPE_CUSTOM and not instruction:
+            return Response(
+                {'detail': 'instruction is required for custom suggestions'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         try:
-            text = llm.get_suggestion(block, suggestion_type)
+            text = llm.get_suggestion(block, suggestion_type, instruction)
         except Exception:
             return Response(
                 {'detail': 'LLM service unavailable'},
@@ -396,6 +403,7 @@ class SuggestionListCreateView(APIView):
         suggestion = Suggestion.objects.create(
             block=block,
             suggestion_type=suggestion_type,
+            instruction=instruction,
             text=text,
             status=Suggestion.STATUS_PENDING,
         )
@@ -404,7 +412,10 @@ class SuggestionListCreateView(APIView):
             event_type=AuditEvent.EVT_SUGGESTION_CREATED,
             actor=request.user,
             block=block,
-            data={'suggestion_type': suggestion_type},
+            data={
+                'suggestion_type': suggestion_type,
+                'instruction': instruction,
+            },
         )
         return Response(
             SuggestionSerializer(suggestion).data,

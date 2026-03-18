@@ -5,6 +5,7 @@ import { useDocumentStore } from '../stores/document'
 import { BlockList } from '../components/editor/BlockList'
 import { NavBar } from '../components/shared/NavBar'
 import type { Member } from '../api/types'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const SnapshotPanel = lazy(() =>
   import('../components/snapshots/SnapshotPanel').then((mod) => ({
@@ -55,6 +56,8 @@ export function DocumentEditor() {
     next.delete('join_status')
     setSearchParams(next, { replace: true })
   }
+
+  usePageTitle(document?.title ? `${document.title} · Editor` : 'Editor')
 
   if (error) {
     return (
@@ -123,7 +126,7 @@ export function DocumentEditor() {
                   : '[border-color:var(--accent)] [color:var(--accent)]'
               }`}
             >
-              {document.access_role === 'owner' ? 'lead' : 'collaborator'}
+              {document.access_role === 'owner' ? 'owner' : 'collaborator'}
             </span>
             <span className="text-xs font-mono [color:var(--text-subtle)]">
               {blocks.length} paragraph{blocks.length !== 1 ? 's' : ''}

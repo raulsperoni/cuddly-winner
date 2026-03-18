@@ -16,22 +16,28 @@ def get_client():
     )
 
 
-def get_suggestion(block, suggestion_type: str) -> str:
+def get_suggestion(
+    block, suggestion_type: str, instruction: str = ''
+) -> str:
     """Call OpenRouter and return suggested text for the block."""
     current = block.current_version()
     if not current:
         return ''
 
-    prompts = {
-        'rewrite': 'Rewrite this paragraph more clearly and concisely.',
-        'improve': 'Improve the clarity and precision of this paragraph.',
-        'shorten': (
-            'Shorten this paragraph significantly while preserving '
-            'key meaning.'
-        ),
-        'expand': 'Expand this paragraph with more detail and context.',
-    }
-    instruction = prompts.get(suggestion_type, prompts['improve'])
+    if suggestion_type == 'custom':
+        prompt = instruction
+    else:
+        prompts = {
+            'rewrite': 'Rewrite this paragraph more clearly and concisely.',
+            'improve': 'Improve the clarity and precision of this paragraph.',
+            'shorten': (
+                'Shorten this paragraph significantly while preserving '
+                'key meaning.'
+            ),
+            'expand': 'Expand this paragraph with more detail and context.',
+        }
+        prompt = prompts.get(suggestion_type, prompts['improve'])
+    instruction = prompt
 
     client = get_client()
     model = os.environ.get(

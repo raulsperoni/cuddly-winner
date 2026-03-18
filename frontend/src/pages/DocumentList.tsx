@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { NavBar } from '../components/shared/NavBar'
 import type { Document } from '../api/types'
+import { BRAND_DOMAIN, BRAND_TAGLINE } from '../lib/brand'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-GB', {
@@ -18,6 +20,8 @@ export function DocumentList() {
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
 
+  usePageTitle()
+
   useEffect(() => {
     api
       .listDocuments()
@@ -32,7 +36,7 @@ export function DocumentList() {
         actions={
           <Link
             to="/documents/new"
-            className="rounded-sm border px-3 py-1.5 text-xs font-mono text-white transition-colors [background:var(--text-main)] [border-color:var(--text-main)] hover:opacity-90"
+            className="rounded-xl border px-3 py-2 text-xs font-mono text-white transition-colors [background:var(--text-main)] [border-color:var(--text-main)] hover:opacity-90"
           >
             + New document
           </Link>
@@ -40,7 +44,20 @@ export function DocumentList() {
       />
 
       <main className="max-w-4xl mx-auto px-6 py-10">
-        <h2 className="text-xs font-mono uppercase tracking-widest mb-6 [color:var(--text-subtle)]">
+        <section className="mb-10 flex flex-col gap-3 border-b pb-8 [border-color:var(--border-subtle)]">
+          <div className="text-[11px] font-mono uppercase tracking-[0.25em] [color:var(--text-subtle)]">
+            {BRAND_DOMAIN}
+          </div>
+          <h1 className="max-w-2xl text-3xl prose-font leading-tight [color:var(--text-strong)]">
+            {BRAND_TAGLINE}
+          </h1>
+          <p className="max-w-2xl text-sm leading-7 [color:var(--text-muted)]">
+            Draft and review documents with clear provenance, paragraph-level history,
+            and exportable records.
+          </p>
+        </section>
+
+        <h2 className="mb-6 text-xs font-mono uppercase tracking-widest [color:var(--text-subtle)]">
           Documents
         </h2>
 
@@ -90,7 +107,7 @@ export function DocumentList() {
                           : '[border-color:var(--accent)] [color:var(--accent)]'
                       }`}
                     >
-                      {doc.access_role === 'owner' ? 'lead' : 'shared'}
+                      {doc.access_role === 'owner' ? 'owner' : 'shared'}
                     </span>
                     <span
                       className={`flex-shrink-0 px-1.5 py-0.5 text-xs font-mono rounded-sm border ${

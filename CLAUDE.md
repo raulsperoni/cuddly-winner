@@ -50,7 +50,7 @@ The core entity hierarchy:
 - `DocumentMembership` — links a user to a document as a collaborator; owners remain implicit via `Document.created_by`
 - `Block` — ordered paragraph within a document; has a `position` field
 - `BlockVersion` — immutable version of a block's text; tracks `author_type` (human/AI), `based_on_version` (parent lineage), and `is_current` flag. Only one version per block can be `is_current=True` (enforced in `save()`)
-- `Suggestion` — AI-generated alternative text for a block (types: rewrite, improve, shorten, expand); must be accepted/rejected via a `Decision`
+- `Suggestion` — AI-generated alternative text for a block (types: rewrite, improve, shorten, expand, custom); must be accepted/rejected via a `Decision`. The `custom` type requires an `instruction` TextField that is passed to the LLM as the editorial prompt and stored for auditability.
 - `Decision` — human approval record linking a `Suggestion` to a resulting `BlockVersion`; types: accept, reject, accept_with_edits
 - `Snapshot` — point-in-time export of a document (versioned); can be pushed to GitHub (`github_commit_sha`, `github_repo`)
 - `AuditEvent` — append-only log of all significant actions on a document

@@ -3,8 +3,7 @@
 ## Product and UX
 
 - [x] Design and implement a full light mode, not just inverted colors.
-- Decide whether `lead` is the right product term or whether ownership should
-  be shown more implicitly.
+- [x] Decided: `owner` is the canonical term throughout API and UI.
 - [x] Improve activity presentation so users see readable decisions first and raw
   event payloads second.
 - [x] Add clearer visible attribution for who approved AI-derived wording.

@@ -507,6 +507,77 @@ class TestRejectSuggestion:
         ).exists()
 
 
+# --- Spec 009: custom AI suggestion ---
+
+
+@pytest.mark.django_db
+class TestCustomSuggestion:
+    def test_custom_suggestion_requires_instruction(
+        self, auth_client, document, block
+    ):
+        url = (
+            f'/api/v1/documents/{document.pk}'
+            f'/blocks/{block.pk}/suggestions/'
+        )
+        resp = auth_client.post(
+            url,
+            {'suggestion_type': 'custom'},
+            content_type='application/json',
+        )
+        assert resp.status_code == 400
+        assert 'instruction' in resp.json()['detail']
+
+    def test_custom_suggestion_stores_instruction(
+        self, auth_client, document, block, monkeypatch
+    ):
+        monkeypatch.setattr(
+            'services.llm.get_suggestion',
+            lambda block, stype, instruction='': 'AI response',
+        )
+        url = (
+            f'/api/v1/documents/{document.pk}'
+            f'/blocks/{block.pk}/suggestions/'
+        )
+        resp = auth_client.post(
+            url,
+            {
+                'suggestion_type': 'custom',
+                'instruction': 'this is too broad',
+            },
+            content_type='application/json',
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data['suggestion_type'] == 'custom'
+        assert data['instruction'] == 'this is too broad'
+        s = Suggestion.objects.get(pk=data['id'])
+        assert s.instruction == 'this is too broad'
+
+    def test_custom_suggestion_audit_records_instruction(
+        self, auth_client, document, block, monkeypatch
+    ):
+        monkeypatch.setattr(
+            'services.llm.get_suggestion',
+            lambda block, stype, instruction='': 'AI response',
+        )
+        url = (
+            f'/api/v1/documents/{document.pk}'
+            f'/blocks/{block.pk}/suggestions/'
+        )
+        auth_client.post(
+            url,
+            {
+                'suggestion_type': 'custom',
+                'instruction': 'make it shorter',
+            },
+            content_type='application/json',
+        )
+        event = AuditEvent.objects.filter(
+            event_type=AuditEvent.EVT_SUGGESTION_CREATED
+        ).first()
+        assert event.data['instruction'] == 'make it shorter'
+
+
 # --- Spec 018: block version history ---
 
 

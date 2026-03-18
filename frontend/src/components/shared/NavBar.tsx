@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Member } from '../../api/types'
+import { BRAND_NAME } from '../../lib/brand'
 
 interface ShareProps {
   readOnlyPath: string
@@ -28,6 +29,30 @@ function buildAbsoluteUrl(path: string): string {
   return `${window.location.origin}${path}`
 }
 
+function SunIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <circle cx="8" cy="8" r="3" />
+      <line x1="8" y1="1" x2="8" y2="2.5" />
+      <line x1="8" y1="13.5" x2="8" y2="15" />
+      <line x1="1" y1="8" x2="2.5" y2="8" />
+      <line x1="13.5" y1="8" x2="15" y2="8" />
+      <line x1="3.4" y1="3.4" x2="4.5" y2="4.5" />
+      <line x1="11.5" y1="11.5" x2="12.6" y2="12.6" />
+      <line x1="3.4" y1="12.6" x2="4.5" y2="11.5" />
+      <line x1="11.5" y1="4.5" x2="12.6" y2="3.4" />
+    </svg>
+  )
+}
+
+function MoonIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M13.5 9A6 6 0 0 1 6 1.5a6.5 6.5 0 1 0 7.5 7.5Z" />
+    </svg>
+  )
+}
+
 function CopyField({
   label,
   value,
@@ -46,23 +71,23 @@ function CopyField({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="text-[11px] font-mono uppercase tracking-[0.2em] [color:var(--text-subtle)]">
+    <div className="space-y-1.5">
+      <div className="text-[10px] font-mono uppercase tracking-[0.2em] [color:var(--text-subtle)]">
         {label}
       </div>
-      <div className="rounded-xl border p-3 [border-color:var(--border-subtle)] [background:var(--app-bg-soft)]">
+      <div className="rounded-lg border p-2.5 [border-color:var(--border-subtle)] [background:var(--app-bg-soft)]">
         <div className="break-all text-xs font-mono [color:var(--text-main)]">{value}</div>
         <div className="mt-2 flex items-center justify-between gap-3">
           {note ? (
-            <div className="text-[11px] font-mono [color:var(--text-subtle)]">{note}</div>
+            <div className="text-[10px] font-mono leading-relaxed [color:var(--text-subtle)]">{note}</div>
           ) : (
             <span />
           )}
           <button
             onClick={handleCopy}
-            className="px-2 py-1 text-[11px] font-mono rounded-sm border transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
+            className="flex-shrink-0 px-2 py-0.5 text-[10px] font-mono rounded border transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
           >
-            {copied ? 'Copied' : 'Copy'}
+            {copied ? '✓ copied' : 'copy'}
           </button>
         </div>
       </div>
@@ -95,17 +120,17 @@ function MemberList({
 
   return (
     <div className="space-y-2 border-t pt-3 [border-color:var(--border-subtle)]">
-      <div className="text-[11px] font-mono uppercase tracking-[0.2em] [color:var(--text-subtle)]">
+      <div className="text-[10px] font-mono uppercase tracking-[0.2em] [color:var(--text-subtle)]">
         Collaborators
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {members.map((member) => (
           <div
             key={member.user_id}
-            className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2 [border-color:var(--border-subtle)] [background:var(--app-bg-soft)]"
+            className="flex items-center justify-between gap-3 rounded-lg border px-2.5 py-1.5 [border-color:var(--border-subtle)] [background:var(--app-bg-soft)]"
           >
             <div className="flex items-center gap-2 min-w-0">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full border text-[11px] font-mono [border-color:var(--border-subtle)] [background:var(--surface-2)] [color:var(--text-main)]">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-mono [border-color:var(--border-subtle)] [background:var(--surface-2)] [color:var(--text-main)]">
                 {member.username.slice(0, 1).toUpperCase()}
               </span>
               <span className="truncate text-xs font-mono [color:var(--text-main)]">
@@ -116,9 +141,9 @@ function MemberList({
               <button
                 onClick={() => handleRemove(member.user_id)}
                 disabled={removingUserId === member.user_id}
-                className="text-[11px] font-mono transition-colors disabled:opacity-50 [color:var(--text-subtle)] hover:[color:var(--danger)]"
+                className="text-[10px] font-mono transition-colors disabled:opacity-50 [color:var(--text-subtle)] hover:[color:var(--danger)]"
               >
-                {removingUserId === member.user_id ? '…' : 'Remove'}
+                {removingUserId === member.user_id ? '…' : 'remove'}
               </button>
             ) : null}
           </div>
@@ -128,22 +153,46 @@ function MemberList({
   )
 }
 
-function SharePopover({ share }: { share: ShareProps }) {
+function SharePopover({
+  share,
+  onClose,
+}: {
+  share: ShareProps
+  onClose: () => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
   const readOnlyLink = buildAbsoluteUrl(share.readOnlyPath)
   const inviteLink = buildAbsoluteUrl(share.invitePath)
 
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    // Use capture so it fires before any stopPropagation inside
+    document.addEventListener('mousedown', handler, true)
+    return () => document.removeEventListener('mousedown', handler, true)
+  }, [onClose])
+
   return (
-    <div className="absolute right-0 top-full z-30 mt-3 w-[28rem] max-w-[calc(100vw-2rem)] rounded-2xl border p-4 shadow-2xl backdrop-blur [border-color:var(--border-subtle)] [background:var(--surface-elevated)]">
+    <div
+      ref={ref}
+      className="absolute right-0 top-full z-30 mt-2 w-[26rem] max-w-[calc(100vw-2rem)] rounded-xl border p-4 shadow-xl backdrop-blur-sm [border-color:var(--border-subtle)] [background:var(--surface-elevated)]"
+    >
+      <div className="mb-3 text-[10px] font-mono uppercase tracking-[0.2em] [color:var(--text-subtle)]">
+        Share document
+      </div>
       <div className="space-y-3">
         <CopyField
           label="Reading link"
           value={readOnlyLink}
-          note="Use this for review, circulation, or public access to the current draft."
+          note="View-only access to the current draft."
         />
         <CopyField
           label="Editing invite"
           value={inviteLink}
-          note="Signed-in recipients can join the drafting team and propose revisions."
+          note="Signed-in users join as collaborators."
         />
         <MemberList
           members={share.members ?? []}
@@ -176,64 +225,78 @@ export function NavBar({ back, title, actions, share }: Props) {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b backdrop-blur-sm bg-[var(--surface-elevated)] [border-color:var(--border-subtle)]">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-6 py-4 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
-        <div className="flex items-start gap-4 min-w-0">
+    <header className="sticky top-0 z-20 border-b backdrop-blur-sm [border-color:var(--border-subtle)] [background:var(--surface-elevated)]">
+      <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-6">
+        {/* ── Left ── */}
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           {back ? (
             <Link
               to={back.to}
-              className="pt-1 text-xs font-mono transition-colors flex-shrink-0 [color:var(--text-subtle)] hover:[color:var(--text-main)]"
+              className="flex-shrink-0 text-xs font-mono transition-colors [color:var(--text-muted)] hover:[color:var(--text-main)]"
             >
               ← {back.label}
             </Link>
           ) : (
             <Link
               to="/"
-              className="pt-1 text-xs font-mono transition-colors flex-shrink-0 [color:var(--text-muted)] hover:[color:var(--text-main)]"
+              className="flex-shrink-0 text-sm font-mono font-medium transition-opacity hover:opacity-75 [color:var(--text-main)]"
             >
-              cuddly-winner
+              {BRAND_NAME}
             </Link>
           )}
-          <div className="min-w-0">
-            <div className="text-[11px] font-mono uppercase tracking-[0.25em] [color:var(--text-subtle)]">
-              Accountable drafting
-            </div>
-            {title ? (
-              <div className="mt-1 text-lg prose-font truncate [color:var(--text-strong)]">
+
+          {title && (
+            <>
+              <span className="flex-shrink-0 text-sm select-none [color:var(--border-strong)]">/</span>
+              <span className="truncate text-sm prose-font leading-tight [color:var(--text-main)]">
                 {title}
-              </div>
-            ) : null}
-          </div>
+              </span>
+            </>
+          )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 pt-1 lg:flex-shrink-0 lg:justify-end">
+        {/* ── Right ── */}
+        <div className="flex flex-shrink-0 items-center gap-1.5">
+          {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            className="rounded-xl border px-3 py-2 text-[11px] font-mono uppercase tracking-[0.2em] transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
           >
-            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
           </button>
+
+          {/* Injected actions (e.g. "+ New document", snapshot button) */}
           {actions}
+
+          {/* Share */}
           {share ? (
             <div className="relative">
               <button
                 onClick={() => setShareOpen((open) => !open)}
-                className="rounded-xl border px-3 py-2 text-[11px] font-mono uppercase tracking-[0.2em] transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
+                className="h-8 rounded-lg border px-3 text-xs font-mono transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
               >
                 Share
               </button>
-              {shareOpen ? <SharePopover share={share} /> : null}
+              {shareOpen ? (
+                <SharePopover share={share} onClose={() => setShareOpen(false)} />
+              ) : null}
             </div>
           ) : null}
+
+          {/* User section */}
           {username && (
-            <span className="text-xs font-mono [color:var(--text-subtle)]">{username}</span>
+            <div className="flex items-center gap-2.5 border-l pl-3 [border-color:var(--border-subtle)]">
+              <span className="text-xs font-mono [color:var(--text-subtle)]">{username}</span>
+              <a
+                href="/accounts/logout/"
+                title="Sign out"
+                className="text-xs font-mono transition-colors [color:var(--text-subtle)] hover:[color:var(--text-main)]"
+              >
+                ↩
+              </a>
+            </div>
           )}
-          <a
-            href="/accounts/logout/"
-            className="text-xs font-mono uppercase tracking-[0.15em] transition-colors [color:var(--text-subtle)] hover:[color:var(--text-main)]"
-          >
-            Sign out
-          </a>
         </div>
       </div>
     </header>

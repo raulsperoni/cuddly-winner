@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { NavBar } from '../components/shared/NavBar'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 interface AuditEvent {
   id: number
@@ -87,6 +88,8 @@ export function DocumentHistory() {
   const [events, setEvents] = useState<AuditEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  usePageTitle(docTitle ? `${docTitle} · Activity` : 'Activity')
 
   useEffect(() => {
     Promise.all([

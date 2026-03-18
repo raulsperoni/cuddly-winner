@@ -17,7 +17,8 @@ export interface BlockVersion {
 
 export interface Suggestion {
   id: number
-  suggestion_type: 'rewrite' | 'improve' | 'shorten' | 'expand'
+  suggestion_type: 'rewrite' | 'improve' | 'shorten' | 'expand' | 'custom'
+  instruction: string
   text: string
   status: 'pending' | 'accepted' | 'rejected'
   created_at: string
@@ -75,6 +76,8 @@ export interface PublicBlock {
   current_version: {
     text: string
     author_type: 'human' | 'ai'
+    approved_by?: string | null
+    decision_type?: 'accept' | 'reject' | 'accept_with_edits' | null
   } | null
 }
 

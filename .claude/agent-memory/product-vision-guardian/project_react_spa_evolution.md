@@ -1,56 +1,30 @@
 ---
 name: React + TipTap SPA architectural evolution
-description: Planned transition from Django templates + HTMX to React SPA + DRF API, with vision risks and approved UX improvements documented
+description: SPA migration is complete as of March 2026 — key decisions, approved UX patterns, and prohibited patterns that are now live
 type: project
 ---
 
-The product is planned to evolve from a Django monolith (templates + HTMX) to
-a React + TipTap SPA backed by Django REST Framework. The design plan is in
-`design/MVP.md` and `design/SPECS.md`.
+The React + TipTap SPA migration is complete. The HTMX/Django-template layer is gone. The codebase as of March 2026 is fully SPA-based.
 
-**Key architectural decisions made:**
-- Django data model (Document, Block, BlockVersion, Suggestion, Decision,
-  Snapshot, AuditEvent) is the source of truth — unchanged
-- Content format: Markdown prose stored in `BlockVersion.text` TextField
-  (upgrading from plain text convention, no schema change)
-- Frontend package lives in `frontend/` at repo root (Vite + React + TS)
-- All API endpoints under `/api/v1/`
-- Auth: session cookies first (same-origin SPA), JWT added later for
-  non-browser clients
-- TipTap used as single-user rich text editor per block; NO collaborative
-  extensions (Y.js, Hocuspocus), NO AI completion extensions
+**Live architecture:**
+- Django handles auth (allauth), API (DRF under `/api/v1/`), join flow (`/join/<token>/`), and static file serving (WhiteNoise)
+- React SPA (Vite + TypeScript + react-router-dom) is the full editor surface, served via `spa_shell` Django view
+- Session-cookie auth, same-origin deployment (Railway)
+- TipTap with `tiptap-markdown` extension — NO Y.js, NO collaborative extensions, NO AI ghost-text extensions
 
-**Vision risks explicitly identified and mitigated in design/MVP.md:**
-- TipTap collaborative editing extensions (Y.js) must never be used
-- TipTap AI completion/ghost text extensions must never be used
-- No "accept all" bulk endpoint — ever
-- No optimistic UI that treats a suggestion as accepted before server confirms
-- TipTap JSON must never be stored as BlockVersion.text (only Markdown)
+**Approved live UX patterns:**
+- SuggestionPanel: two-column view (current paragraph vs proposed revision with DiffView) with explicit Approve / Revise & approve / Reject buttons
+- AuthorshipBadge on every block: "Human draft" or "AI draft approved by [user]"
+- LineagePanel (collapsible "Review trail") per block: shows version history and Decision records
+- BlockItem with hover-reveal suggestion type buttons (Clarify / Rephrase / Condense / Expand)
+- DocumentHistory page as chronological audit event timeline with human-readable descriptions
 
-**Approved UX improvements (vision-safe):**
-- Inline word-level diff preview (informational only, does not skip decision)
-- Keyboard shortcuts to trigger suggestion types (not to auto-accept)
-- Bulk reject only (bulk accept is prohibited)
-- Focus mode (accept/reject UI still required and visible)
-- Suggestion queue panel (still requires per-suggestion decisions)
-- Optimistic UI for cosmetic feedback only (server remains authority)
+**Prohibited patterns (still enforced):**
+- No bulk accept endpoint — explicitly prohibited in specs.md
+- No auto-accept or smart defaults pre-selecting suggestions
+- No TipTap JSON storage in BlockVersion.text
+- No Y.js or Hocuspocus collaborative editing extensions
 
-**Prohibited UX patterns (explicitly documented):**
-- Accept all button
-- Auto-accept on timeout or inactivity
-- Smart defaults pre-selecting accept
-- Ghost text / Copilot-style inline completion
-- Undo that silently deletes a Decision record
+**Why:** Vision unchanged; delivery mechanism modernised for institutional users.
 
-**Phased migration:**
-1. DRF API alongside existing templates (no user-visible change)
-2. React SPA for document editing only
-3. Full SPA migration
-4. Optional: extract frontend as standalone deployment
-
-**Why:** Adoption barrier — policy teams expect modern writing tool UX. The
-vision is unchanged; the delivery mechanism is improved.
-
-**How to apply:** Any PR touching the frontend or API layer must be evaluated
-against design/MVP.md and design/SPECS.md. The Decision enforcement boundary
-(Specs 015–017, 020) is the most critical review surface.
+**How to apply:** New frontend features must call DRF API. The SuggestionPanel accept/reject/accept-with-edits triad is the core interaction — any proposal that bypasses, simplifies, or merges those three actions needs product owner review.

@@ -32,6 +32,7 @@ public reader
 - Users can inspect version history per block.
 - AI-authored versions must be visibly labeled.
 - Human approvals and rejections must remain inspectable after the fact.
+- Public readers must be able to see who approved AI-derived wording.
 
 ### Spec 004 — Auditability
 
@@ -41,6 +42,7 @@ public reader
 ### Spec 005 — Sharing model
 
 - Read-only sharing uses `/p/<public_token>/` and never grants edit access.
+- The `owner` role is the canonical term throughout the API and UI.
 - Collaboration sharing uses `/join/<invite_token>/`.
 - Visiting the join link while authenticated grants collaborator access.
 - Visiting the join link while unauthenticated redirects through signup/login first.
@@ -62,6 +64,34 @@ public reader
 - Authenticated document workflows are served through the React SPA.
 - Public shared documents are also served through the React SPA.
 - Django-rendered pages are limited to auth and redirect/entry concerns.
+
+### Spec 009 — Human-instructed AI suggestions
+
+- Collaborators may submit a free-text instruction alongside an AI suggestion request.
+- When `suggestion_type = custom`, an `instruction` field is required.
+- The instruction is passed to the LLM as the editorial prompt.
+- The instruction is stored on `Suggestion.instruction` for auditability.
+- The instruction is recorded in `AuditEvent.data` when the suggestion is created.
+- The resulting suggestion goes through the standard Decision flow (Spec 002) unchanged.
+
+## Extended specifications
+
+Spec 010 is reserved. Specs 011–022 are in `docs/specs/`:
+
+| Spec | Title |
+|------|-------|
+| [011](specs/011-plain-markdown-export.md) | Plain Markdown Export |
+| [012](specs/012-annotated-markdown-export.md) | Annotated Markdown Export |
+| [013](specs/013-export-metadata-bundle.md) | Export Metadata Bundle |
+| [014](specs/014-git-export.md) | Git Export of Snapshot |
+| [015](specs/015-narrative-summary-block.md) | Narrative Summary: Block View |
+| [016](specs/016-narrative-summary-document.md) | Narrative Summary: Document View |
+| [017](specs/017-narrative-guardrails.md) | Narrative Generation Guardrails |
+| [018](specs/018-document-visibility.md) | Document Visibility |
+| [019](specs/019-private-documents.md) | Private Documents (Operator-Managed) |
+| [020](specs/020-viewer-role.md) | Viewer Role |
+| [021](specs/021-enhanced-public-view.md) | Enhanced Public Read-Only View |
+| [022](specs/022-snapshot-public-url.md) | Snapshot Stable Public URL |
 
 ## Current implementation constraints
 

@@ -54,7 +54,8 @@ class SuggestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Suggestion
         fields = [
-            'id', 'suggestion_type', 'text', 'status', 'created_at',
+            'id', 'suggestion_type', 'instruction', 'text', 'status',
+            'created_at',
         ]
 
 
@@ -155,7 +156,15 @@ class PublicBlockSerializer(serializers.ModelSerializer):
     def get_current_version(self, obj):
         v = obj.current_version()
         if v:
-            return {'text': v.text, 'author_type': v.author_type}
+            data = {'text': v.text, 'author_type': v.author_type}
+            if v.author_type == 'ai':
+                decision = (
+                    v.decisions.select_related('decided_by').first()
+                )
+                if decision:
+                    data['approved_by'] = decision.decided_by.username
+                    data['decision_type'] = decision.decision_type
+            return data
         return None
 
 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { NavBar } from '../components/shared/NavBar'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 export function DocumentCreate() {
   const navigate = useNavigate()
@@ -10,6 +11,8 @@ export function DocumentCreate() {
   const [initialContent, setInitialContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  usePageTitle('Create document')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,7 +34,7 @@ export function DocumentCreate() {
 
   return (
     <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-main)]">
-      <NavBar back={{ to: '/', label: 'back' }} title="New document" />
+      <NavBar back={{ to: '/', label: 'Documents' }} title="Create document" />
 
       <main className="max-w-2xl mx-auto px-6 py-10">
         <form onSubmit={handleSubmit} className="space-y-6">

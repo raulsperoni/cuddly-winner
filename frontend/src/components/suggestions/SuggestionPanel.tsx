@@ -88,7 +88,10 @@ export function SuggestionPanel({ block, documentId, suggestions }: Props) {
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-[var(--accent)]" />
           <span className="text-xs font-mono uppercase tracking-wider [color:var(--accent)]">
-            Review draft — {suggestion.suggestion_type}
+            Review draft —{' '}
+            {suggestion.suggestion_type === 'custom' && suggestion.instruction
+              ? suggestion.instruction
+              : suggestion.suggestion_type}
           </span>
         </div>
         {suggestions.length > 1 && (

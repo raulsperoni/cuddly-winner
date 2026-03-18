@@ -32,6 +32,8 @@ interface Props {
 
 export function BlockItem({ block, documentId }: Props) {
   const [hovered, setHovered] = useState(false)
+  const [customOpen, setCustomOpen] = useState(false)
+  const [customInstruction, setCustomInstruction] = useState('')
   const { updateBlock, addSuggestionToBlock } = useDocumentStore()
   const {
     editingBlockId,
@@ -56,17 +58,30 @@ export function BlockItem({ block, documentId }: Props) {
 
   const handleCancel = () => setEditingBlock(null)
 
-  const handleRequestSuggestion = async (type: string) => {
+  const handleRequestSuggestion = async (
+    type: string,
+    instruction = '',
+  ) => {
     if (isLoading || isEditing) return
     setBlockLoading(block.id, true)
     try {
-      const suggestion = await api.createSuggestion(documentId, block.id, type)
+      const suggestion = await api.createSuggestion(
+        documentId, block.id, type, instruction,
+      )
       addSuggestionToBlock(block.id, suggestion)
     } catch (e) {
       console.error('Suggestion request failed', e)
     } finally {
       setBlockLoading(block.id, false)
     }
+  }
+
+  const handleCustomSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!customInstruction.trim()) return
+    setCustomOpen(false)
+    await handleRequestSuggestion('custom', customInstruction.trim())
+    setCustomInstruction('')
   }
 
   return (
@@ -101,7 +116,7 @@ export function BlockItem({ block, documentId }: Props) {
               )}
               {hasPending && (
                 <span className="text-[11px] font-mono [color:var(--accent)]">
-                  {pendingSuggestions.length} awaiting review
+                  {pendingSuggestions.length} pending review
                 </span>
               )}
             </div>
@@ -122,8 +137,44 @@ export function BlockItem({ block, documentId }: Props) {
                   {label}
                 </button>
               ))}
+              <button
+                onClick={() => setCustomOpen((v) => !v)}
+                className="px-2 py-0.5 text-[11px] font-mono rounded-sm transition-colors [color:var(--text-subtle)] hover:[color:var(--accent)] hover:[background:var(--accent-soft)]"
+              >
+                Ask AI…
+              </button>
             </div>
           </div>
+
+          {customOpen && !isEditing && (
+            <form
+              onSubmit={handleCustomSubmit}
+              className="mb-2 flex items-center gap-2"
+            >
+              <input
+                autoFocus
+                type="text"
+                value={customInstruction}
+                onChange={(e) => setCustomInstruction(e.target.value)}
+                placeholder="e.g. this is too broad, tighten the scope"
+                className="flex-1 rounded px-2 py-1 text-xs font-mono focus:outline-none [background:var(--app-bg-soft)] [border:1px_solid_var(--border-subtle)] [color:var(--text-main)] placeholder:[color:var(--text-subtle)] focus:[border-color:var(--accent)]"
+              />
+              <button
+                type="submit"
+                disabled={!customInstruction.trim()}
+                className="px-2 py-1 text-[11px] font-mono rounded-sm border disabled:opacity-40 transition-colors [background:var(--accent)] [border-color:var(--accent)] text-white"
+              >
+                Ask
+              </button>
+              <button
+                type="button"
+                onClick={() => { setCustomOpen(false); setCustomInstruction('') }}
+                className="text-[11px] font-mono [color:var(--text-subtle)] hover:[color:var(--text-main)]"
+              >
+                Cancel
+              </button>
+            </form>
+          )}
 
           <div className="relative py-1">
             {isLoading && (
@@ -148,7 +199,7 @@ export function BlockItem({ block, documentId }: Props) {
             <Suspense
               fallback={
                 <div className="text-xs font-mono [color:var(--text-subtle)]">
-                  Loading review trail…
+                  Loading history…
                 </div>
               }
             >
