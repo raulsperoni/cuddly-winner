@@ -4,7 +4,7 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "./entrypoint.sh poetry run gunicorn cuddly_winner.wsgi:application --bind 0.0.0.0:$PORT --workers 2",
+    "startCommand": "./start-web.sh",
     "healthcheckPath": "/health/",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",

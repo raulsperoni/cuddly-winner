@@ -36,5 +36,4 @@ RUN poetry run python manage.py collectstatic --noinput \
 ENTRYPOINT ["./entrypoint.sh"]
 
 EXPOSE 8000
-CMD ["poetry", "run", "gunicorn", "cuddly_winner.wsgi:application", \
-     "--bind", "0.0.0.0:8000"]
+CMD ["./start-web.sh"]

@@ -158,7 +158,7 @@ Railway will use the Dockerfile automatically. The deploy flow is:
 3. Build the React app with `npm run build`
 4. Collect Django static files
 5. Run [entrypoint.sh](./entrypoint.sh), which applies migrations
-6. Start Gunicorn through the same entrypoint
+6. Start [start-web.sh](./start-web.sh), which binds Gunicorn to `PORT`
 
 ### 4. Verify after first deploy
 
