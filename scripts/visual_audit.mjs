@@ -27,8 +27,23 @@ async function px(page, name) {
   console.log(`  ✓ ${name}`)
 }
 
-async function el(locator, name) {
-  await locator.screenshot({ path: path.join(OUT, `${name}.png`) })
+async function el(page, locator, name) {
+  // Use evaluate to get bounding box directly, bypassing actionability checks
+  const handle = await locator.elementHandle({ timeout: 5000 }).catch(() => null)
+  let box = handle
+    ? await handle.boundingBox()
+    : null
+  if (!box) {
+    // Fallback: evaluate in page context
+    box = await page.evaluate((sel) => {
+      const el = document.querySelector(sel)
+      if (!el) return null
+      const r = el.getBoundingClientRect()
+      return { x: r.left + window.scrollX, y: r.top + window.scrollY, width: r.width, height: r.height }
+    }, locator._selector ?? 'header')
+  }
+  if (!box) throw new Error(`No bounding box for ${name}`)
+  await page.screenshot({ path: path.join(OUT, `${name}.png`), clip: box, fullPage: false })
   console.log(`  ✓ ${name}`)
 }
 
@@ -43,7 +58,10 @@ async function login(page) {
 
 async function goEditor(page) {
   await page.goto(`${BASE}/documents/${DOC_ID}/edit/`, { waitUntil: 'networkidle' })
-  await page.waitForTimeout(1200)
+  await page.waitForTimeout(2000)
+  // Confirm React rendered blocks — if not, give it more time
+  const loaded = await page.locator('.group').first().isVisible().catch(() => false)
+  if (!loaded) await page.waitForTimeout(2000)
 }
 
 // ── run ────────────────────────────────────────────────────────────────────
@@ -62,11 +80,11 @@ const browser = await chromium.launch({ headless: true })
   await px(page, '01_editor_overview')
 
   // 2 · Just the two-row navbar in editor context
-  await el(page.locator('header').first(), '02_navbar_editor')
+  await el(page, page.locator('header').first(), '02_navbar_editor')
 
   // 3 · Block list area (scroll-crop to first ~5 paragraphs)
   const main = page.locator('main').first()
-  await el(main, '03_block_list')
+  await el(page, main, '03_block_list')
 
   // Use block index 1 (second block — no pending suggestion) for clean hover/edit demos
   const blocks = page.locator('.group')
@@ -75,12 +93,12 @@ const browser = await chromium.launch({ headless: true })
   // 4 · Block hovered — AI action buttons visible (clarify / rephrase / condense / expand / ask AI)
   await demoBlock.hover()
   await page.waitForTimeout(250)
-  await el(demoBlock, '04_block_hovered_actions')
+  await el(page, demoBlock, '04_block_hovered_actions')
 
   // 5 · Block in edit mode (TipTap focused, surface-2 background, save/cancel)
   await demoBlock.click()
   await page.waitForTimeout(350)
-  await el(demoBlock, '05_block_editing')
+  await el(page, demoBlock, '05_block_editing')
   await page.keyboard.press('Escape')
   await page.waitForTimeout(200)
 
@@ -91,9 +109,9 @@ const browser = await chromium.launch({ headless: true })
   if (await askBtn.isVisible()) {
     await askBtn.click()
     await page.waitForTimeout(250)
-    await el(demoBlock, '06_block_ask_ai_form')
+    await el(page, demoBlock, '06_block_ask_ai_form')
     // close form
-    await demoBlock.locator('button', { hasText: /cancel/i }).click()
+    await demoBlock.locator('button').filter({ hasText: /cancel/i }).click()
     await page.waitForTimeout(150)
   }
 
@@ -105,29 +123,29 @@ const browser = await chromium.launch({ headless: true })
   await page.waitForTimeout(200)
   // Crop just the block header (above the suggestion panel) for the "pending state" shot
   const blockHeader = pendingBlock.locator('.grid').first()
-  await el(blockHeader, '07_block_pending_state')
+  await el(page, blockHeader, '07_block_pending_state')
 
   // 8 · Suggestion panel — full viewport showing current paragraph vs proposed revision
   await px(page, '08_suggestion_panel_viewport')
 
-  // 9 · Suggestion panel detail crop (diff + approve / revise / reject buttons)
-  await el(pendingBlock, '09_suggestion_panel_full')
+  // 9 · Suggestion panel detail crop (diff + approve / revise & approve / reject buttons)
+  await el(page, pendingBlock, '09_suggestion_panel_full')
 
   // 10 · Lineage panel open (version history of a block)
   await goEditor(page)
   await page.waitForTimeout(600)
-  const lineageToggle = page.locator('button', { hasText: /view history/i }).first()
+  const lineageToggle = page.locator('button').filter({ hasText: /view history/i }).first()
   if (await lineageToggle.isVisible()) {
     await lineageToggle.click()
     await page.waitForTimeout(400)
     const lineageBlock = page.locator('.group').first()
-    await el(lineageBlock, '10_lineage_panel_open')
+    await el(page, lineageBlock, '10_lineage_panel_open')
   }
 
   // 11 · Share popover
   await page.goto(`${BASE}/documents/${DOC_ID}/edit/`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(800)
-  const shareBtn = page.locator('button', { hasText: /share/i }).first()
+  const shareBtn = page.locator('button').filter({ hasText: /share/i }).first()
   if (await shareBtn.isVisible()) {
     await shareBtn.click()
     await page.waitForTimeout(350)
@@ -162,14 +180,14 @@ const browser = await chromium.launch({ headless: true })
   await px(page, '13_mobile_editor_overview')
 
   // 14 · Mobile navbar (two rows)
-  await el(page.locator('header').first(), '14_mobile_navbar')
+  await el(page, page.locator('header').first(), '14_mobile_navbar')
 
   // 15 · Mobile block area
-  await el(page.locator('main').first(), '15_mobile_block_list')
+  await el(page, page.locator('main').first(), '15_mobile_block_list')
 
   // 16 · Mobile block with pending suggestion
   const pendingBlock = page.locator('.group').first()
-  await el(pendingBlock, '16_mobile_pending_block')
+  await el(page, pendingBlock, '16_mobile_pending_block')
 
   // 17 · Mobile suggestion panel viewport
   await px(page, '17_mobile_suggestion_panel')
@@ -189,7 +207,7 @@ const browser = await chromium.launch({ headless: true })
   await px(page, '18_tablet_editor_overview')
 
   // 19 · Tablet navbar
-  await el(page.locator('header').first(), '19_tablet_navbar')
+  await el(page, page.locator('header').first(), '19_tablet_navbar')
 
   await ctx.close()
 }

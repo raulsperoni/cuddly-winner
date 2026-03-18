@@ -1,3 +1,5 @@
+import logging
+
 from django.db.models import F, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -31,6 +33,8 @@ from core.api.serializers import (
     SuggestionSerializer,
 )
 from services import llm
+
+logger = logging.getLogger(__name__)
 
 
 def _get_accessible_document(pk, user):
@@ -142,8 +146,19 @@ class DocumentDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
-        doc, _role = _get_accessible_document(pk, request.user)
-        return Response(DocumentDetailSerializer(doc).data)
+        try:
+            doc, _role = _get_accessible_document(pk, request.user)
+            return Response(DocumentDetailSerializer(doc).data)
+        except Exception:
+            logger.exception(
+                'Failed document detail response',
+                extra={
+                    'document_id': pk,
+                    'user_id': request.user.id,
+                    'username': request.user.username,
+                },
+            )
+            raise
 
     def patch(self, request, pk):
         doc, role = _get_accessible_document(pk, request.user)
