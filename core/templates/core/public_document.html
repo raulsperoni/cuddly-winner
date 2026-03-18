@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="{{ current_language|default:'en' }}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ meta_title }}</title>
+    <meta name="description" content="{{ meta_description }}" />
+    <meta name="robots" content="{{ meta_robots }}" />
+    <link rel="canonical" href="{{ canonical_url }}" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="{{ meta_title }}" />
+    <meta property="og:description" content="{{ meta_description }}" />
+    <meta property="og:url" content="{{ canonical_url }}" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="{{ meta_title }}" />
+    <meta name="twitter:description" content="{{ meta_description }}" />
+    <link rel="icon" type="image/svg+xml" href="/static/core/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Lora:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --app-bg: #f6f0e7;
+        --surface-1: rgba(255, 252, 248, 0.96);
+        --surface-2: rgba(240, 233, 223, 0.88);
+        --text-main: #2f2923;
+        --text-strong: #171311;
+        --text-muted: #665d56;
+        --text-subtle: #8f847a;
+        --border-subtle: rgba(118, 103, 90, 0.18);
+        --accent: #9b6c16;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: 'IBM Plex Sans', sans-serif;
+        background:
+          radial-gradient(circle at top, rgba(155, 108, 22, 0.08), transparent 34%),
+          linear-gradient(180deg, #fbf7f0 0%, #f6f0e7 100%);
+        color: var(--text-main);
+      }
+      .prose-font { font-family: 'Lora', serif; }
+      .mono-font { font-family: 'IBM Plex Mono', monospace; }
+      .shell {
+        width: min(920px, calc(100vw - 32px));
+        margin: 0 auto;
+      }
+      .paper {
+        background: var(--surface-1);
+        border: 1px solid var(--border-subtle);
+        border-radius: 32px;
+        padding: 32px;
+        box-shadow: 0 30px 80px rgba(47, 41, 35, 0.08);
+      }
+      .doc-body {
+        display: grid;
+        gap: 32px;
+        margin-top: 32px;
+      }
+      .doc-block {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr);
+        gap: 16px;
+        align-items: start;
+      }
+      .doc-block pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font: inherit;
+      }
+      @media (max-width: 720px) {
+        .paper { padding: 22px; }
+        .doc-block { grid-template-columns: 1fr; gap: 8px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="shell" style="padding: 20px 0 12px;">
+      <div class="mono-font" style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-subtle);">
+        draftingdocs.org
+      </div>
+    </header>
+
+    <main class="shell" style="padding: 8px 0 48px;">
+      <article class="paper">
+        <div class="mono-font" style="font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-subtle);">
+          Shared Document
+        </div>
+        <h1 class="prose-font" style="margin: 14px 0 0; font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.05; color: var(--text-strong);">
+          {{ document.title }}
+        </h1>
+        {% if document.description %}
+        <p class="prose-font" style="margin: 18px 0 0; max-width: 42rem; font-size: 1.1rem; line-height: 1.8; color: var(--text-muted);">
+          {{ document.description }}
+        </p>
+        {% endif %}
+
+        <section class="doc-body">
+          {% for block in blocks %}
+          <article class="doc-block">
+            <div class="mono-font" style="padding-top: 6px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-subtle); text-align: right;">
+              ¶ {{ block.position|add:1 }}
+            </div>
+            <div class="prose-font" style="font-size: 1.25rem; line-height: 1.9; color: var(--text-main);">
+              <pre>{{ block.text }}</pre>
+            </div>
+          </article>
+          {% empty %}
+          <p class="mono-font" style="font-size: 0.9rem; color: var(--text-subtle);">No public content yet.</p>
+          {% endfor %}
+        </section>
+      </article>
+    </main>
+  </body>
+</html>

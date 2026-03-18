@@ -1,9 +1,13 @@
+import html
+
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.html import strip_tags
+from django.utils.text import Truncator
 
 from .models import (
     Document, DocumentMembership,
@@ -50,13 +54,82 @@ def document_editor_spa(request, pk):
 
 
 def public_spa_shell(request, token):
-    get_object_or_404(Document, public_token=token)
-    return render(request, 'core/document_editor_shell.html', {
-        'debug': settings.DEBUG,
-        'current_username': (
-            request.user.username if request.user.is_authenticated else ''
+    doc = get_object_or_404(Document, public_token=token)
+    blocks = []
+    for block in doc.blocks.order_by('position'):
+        version = block.current_version()
+        blocks.append(
+            {
+                'position': block.position,
+                'text': version.text if version else '',
+            }
+        )
+
+    first_text = next((b['text'] for b in blocks if b['text'].strip()), '')
+    meta_description_source = doc.description.strip() or first_text
+    meta_description = Truncator(strip_tags(meta_description_source)).chars(160)
+    canonical_url = request.build_absolute_uri()
+    title = doc.title or 'Shared document'
+
+    return render(
+        request,
+        'core/public_document.html',
+        {
+            'document': doc,
+            'blocks': blocks,
+            'canonical_url': canonical_url,
+            'meta_title': f'{title} · DraftingDocs',
+            'meta_description': meta_description or 'Public drafting document',
+            'meta_robots': (
+                'index, follow'
+                if doc.status == Document.STATUS_PUBLISHED
+                else 'noindex, nofollow'
+            ),
+            'current_username': (
+                request.user.username if request.user.is_authenticated else ''
+            ),
+        },
+    )
+
+
+def robots_txt(request):
+    return HttpResponse(
+        '\n'.join(
+            [
+                'User-agent: *',
+                'Allow: /p/',
+                'Disallow: /accounts/',
+                'Disallow: /api/',
+                'Disallow: /documents/',
+                'Disallow: /join/',
+                f'Sitemap: {request.build_absolute_uri("/sitemap.xml")}',
+                '',
+            ]
         ),
-    })
+        content_type='text/plain',
+    )
+
+
+def sitemap_xml(request):
+    public_docs = Document.objects.filter(
+        status=Document.STATUS_PUBLISHED
+    ).order_by('-updated_at')
+    items = ''.join(
+        (
+            '<url>'
+            f'<loc>{html.escape(request.build_absolute_uri(reverse("document_public", kwargs={"token": doc.public_token})))}</loc>'
+            f'<lastmod>{doc.updated_at.date().isoformat()}</lastmod>'
+            '</url>'
+        )
+        for doc in public_docs
+    )
+    body = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        f'{items}'
+        '</urlset>'
+    )
+    return HttpResponse(body, content_type='application/xml')
 
 
 def join_document(request, invite_token):
