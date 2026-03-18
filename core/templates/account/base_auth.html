@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ current_language }}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Account{% endblock %} · DraftingDocs</title>
+    <title>{% block title %}{% app_t 'account' %}{% endblock %} · DraftingDocs</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -73,20 +73,34 @@
       <a href="/" class="mono-font text-[11px] uppercase tracking-[0.25em] [color:var(--text-subtle)] transition hover:[color:var(--text-main)]">
         draftingdocs.org
       </a>
-      <button
-        type="button"
-        onclick="toggleTheme()"
-        class="mono-font rounded-xl border px-3 py-2 text-[11px] uppercase tracking-[0.2em] transition [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
-      >
-        Toggle theme
-      </button>
+      <div class="flex items-center gap-2">
+        <a
+          href="?lang=en"
+          class="mono-font rounded-xl border px-3 py-2 text-[11px] uppercase tracking-[0.2em] transition {% if current_language == 'en' %}[background:var(--surface-2)] [color:var(--text-main)]{% else %}[border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[color:var(--text-main)]{% endif %}"
+        >
+          {% app_t 'english' %}
+        </a>
+        <a
+          href="?lang=es"
+          class="mono-font rounded-xl border px-3 py-2 text-[11px] uppercase tracking-[0.2em] transition {% if current_language == 'es' %}[background:var(--surface-2)] [color:var(--text-main)]{% else %}[border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[color:var(--text-main)]{% endif %}"
+        >
+          {% app_t 'spanish' %}
+        </a>
+        <button
+          type="button"
+          onclick="toggleTheme()"
+          class="mono-font rounded-xl border px-3 py-2 text-[11px] uppercase tracking-[0.2em] transition [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
+        >
+          {% app_t 'toggle_theme' %}
+        </button>
+      </div>
     </header>
 
     <main class="mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl items-center px-6 pb-12">
       <div class="grid w-full gap-12 lg:grid-cols-[1.1fr_0.9fr]">
         <section class="max-w-2xl">
           <div class="mono-font text-[11px] uppercase tracking-[0.25em] [color:var(--text-subtle)]">
-            {% block eyebrow %}AI-assisted drafting with full traceability{% endblock %}
+            {% block eyebrow %}{% app_t 'ai_traceability' %}{% endblock %}
           </div>
           <h1 class="prose-font mt-4 text-4xl leading-tight [color:var(--text-strong)]">
             {% block heading %}{% endblock %}

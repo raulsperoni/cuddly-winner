@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from 'tiptap-markdown'
+import { useLocale } from '../../lib/i18n'
 
 interface Props {
   blockId: number
@@ -22,6 +23,7 @@ export function BlockEditor({
   onCancel,
   hasPendingSuggestions,
 }: Props) {
+  const { t } = useLocale()
   const [saving, setSaving] = useState(false)
   const prevTextRef = useRef(text)
 
@@ -93,7 +95,7 @@ export function BlockEditor({
         />
         {!text && !isEditing && (
           <span className="prose-font text-[18px] italic [color:var(--text-subtle)]">
-            Empty paragraph. Click to begin writing.
+            {t('emptyParagraphClick')}
           </span>
         )}
       </div>
@@ -105,16 +107,16 @@ export function BlockEditor({
             disabled={saving}
             className="rounded-sm border px-3 py-1.5 text-xs font-mono text-white transition-colors disabled:opacity-50 [background:var(--text-main)] [border-color:var(--text-main)] hover:opacity-90"
           >
-            {saving ? 'Saving…' : 'Save revision'}
+            {saving ? t('saving') : t('saveRevision')}
           </button>
           <button
             onClick={onCancel}
             className="px-3 py-1.5 text-xs font-mono transition-colors [color:var(--text-subtle)] hover:[color:var(--text-main)]"
           >
-            Keep current text
+            {t('keepCurrentText')}
           </button>
           <span className="ml-auto text-xs font-mono [color:var(--text-subtle)]">
-            ⌘↵ save revision · Esc cancel
+            {t('editorShortcuts')}
           </span>
         </div>
       )}

@@ -5,16 +5,10 @@ import { NavBar } from '../components/shared/NavBar'
 import type { Document } from '../api/types'
 import { BRAND_DOMAIN, BRAND_TAGLINE } from '../lib/brand'
 import { usePageTitle } from '../hooks/usePageTitle'
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
+import { useLocale } from '../lib/i18n'
 
 export function DocumentList() {
+  const { t, formatDate } = useLocale()
   const [docs, setDocs] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -38,7 +32,7 @@ export function DocumentList() {
             to="/documents/new"
             className="rounded-xl border px-3 py-2 text-xs font-mono text-white transition-colors [background:var(--text-main)] [border-color:var(--text-main)] hover:opacity-90"
           >
-            + New document
+            + {t('newDocument')}
           </Link>
         }
       />
@@ -52,18 +46,17 @@ export function DocumentList() {
             {BRAND_TAGLINE}
           </h1>
           <p className="max-w-2xl text-sm leading-7 [color:var(--text-muted)]">
-            Draft and review documents with clear provenance, paragraph-level history,
-            and exportable records.
+            {t('documentListIntro')}
           </p>
         </section>
 
         <h2 className="mb-6 text-xs font-mono uppercase tracking-widest [color:var(--text-subtle)]">
-          Documents
+          {t('documents')}
         </h2>
 
         {loading && (
           <p className="text-sm font-mono animate-pulse [color:var(--text-subtle)]">
-            Loading…
+            {t('loading')}
           </p>
         )}
 
@@ -76,13 +69,13 @@ export function DocumentList() {
         {!loading && !error && docs.length === 0 && (
           <div className="text-center py-20">
             <p className="text-sm font-mono mb-4 [color:var(--text-subtle)]">
-              No documents yet.
+              {t('noDocumentsYet')}
             </p>
             <Link
               to="/documents/new"
               className="text-xs font-mono transition-colors [color:var(--text-muted)] hover:[color:var(--text-main)]"
             >
-              Create your first document →
+              {t('createYourFirstDocument')}
             </Link>
           </div>
         )}
@@ -107,7 +100,7 @@ export function DocumentList() {
                           : '[border-color:var(--accent)] [color:var(--accent)]'
                       }`}
                     >
-                      {doc.access_role === 'owner' ? 'owner' : 'shared'}
+                      {doc.access_role === 'owner' ? t('owner') : t('shared')}
                     </span>
                     <span
                       className={`flex-shrink-0 px-1.5 py-0.5 text-xs font-mono rounded-sm border ${
@@ -116,7 +109,7 @@ export function DocumentList() {
                           : '[border-color:var(--border-subtle)] [color:var(--text-subtle)]'
                       }`}
                     >
-                      {doc.status}
+                      {doc.status === 'published' ? t('statusPublished') : t('statusDraft')}
                     </span>
                   </div>
                   {doc.description && (
@@ -126,16 +119,20 @@ export function DocumentList() {
                   )}
                   {doc.access_role === 'collaborator' && (
                     <p className="mt-1 text-[11px] font-mono truncate [color:var(--text-subtle)]">
-                      shared by {doc.owner_username}
+                      {t('sharedBy', { owner_username: doc.owner_username })}
                     </p>
                   )}
                 </div>
                 <div className="flex-shrink-0 text-right">
                   <div className="text-xs font-mono [color:var(--text-muted)]">
-                    {doc.block_count} paragraph{doc.block_count !== 1 ? 's' : ''}
+                    {t('paragraphsCount', { count: doc.block_count })}
                   </div>
                   <div className="text-xs font-mono mt-0.5 [color:var(--text-subtle)]">
-                    {formatDate(doc.updated_at)}
+                    {formatDate(doc.updated_at, {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
                   </div>
                 </div>
               </button>

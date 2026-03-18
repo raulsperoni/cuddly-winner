@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { NavBar } from '../components/shared/NavBar'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { useLocale } from '../lib/i18n'
 
 export function DocumentCreate() {
+  const { t } = useLocale()
   const navigate = useNavigate()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -12,7 +14,7 @@ export function DocumentCreate() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  usePageTitle('Create document')
+  usePageTitle(t('createDocument'))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,7 +36,7 @@ export function DocumentCreate() {
 
   return (
     <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-main)]">
-      <NavBar back={{ to: '/', label: 'Documents' }} title="Create document" />
+      <NavBar back={{ to: '/', label: t('documents') }} title={t('createDocument')} />
 
       <main className="max-w-2xl mx-auto px-6 py-10">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -46,7 +48,7 @@ export function DocumentCreate() {
 
           <div>
             <label className="block text-xs font-mono uppercase tracking-widest mb-2 [color:var(--text-subtle)]">
-              Title *
+              {t('title')}
             </label>
             <input
               type="text"
@@ -54,37 +56,36 @@ export function DocumentCreate() {
               onChange={(e) => setTitle(e.target.value)}
               required
               autoFocus
-              placeholder="Policy document title"
+              placeholder={t('titlePlaceholder')}
               className="w-full rounded-xl px-4 py-3 text-sm font-mono transition-colors [background:var(--surface-1)] [border:1px_solid_var(--border-subtle)] [color:var(--text-main)] placeholder:[color:var(--text-subtle)] focus:outline-none focus:[border-color:var(--border-strong)]"
             />
           </div>
 
           <div>
             <label className="block text-xs font-mono uppercase tracking-widest mb-2 [color:var(--text-subtle)]">
-              Description
+              {t('description')}
             </label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description (optional)"
+              placeholder={t('descriptionPlaceholder')}
               className="w-full rounded-xl px-4 py-3 text-sm transition-colors [background:var(--surface-1)] [border:1px_solid_var(--border-subtle)] [color:var(--text-main)] placeholder:[color:var(--text-subtle)] focus:outline-none focus:[border-color:var(--border-strong)]"
             />
           </div>
 
           <div>
             <label className="block text-xs font-mono uppercase tracking-widest mb-2 [color:var(--text-subtle)]">
-              Initial content
+              {t('initialContent')}
             </label>
             <p className="text-xs font-mono mb-2 [color:var(--text-subtle)]">
-              Paste existing text. Blank lines between paragraphs create
-              separate paragraphs.
+              {t('initialContentHelp')}
             </p>
             <textarea
               value={initialContent}
               onChange={(e) => setInitialContent(e.target.value)}
               rows={10}
-              placeholder="Paste your document text here…"
+              placeholder={t('initialContentPlaceholder')}
               className="w-full rounded-2xl px-4 py-4 text-base prose-font transition-colors resize-y [background:var(--surface-1)] [border:1px_solid_var(--border-subtle)] [color:var(--text-main)] placeholder:[color:var(--text-subtle)] focus:outline-none focus:[border-color:var(--border-strong)]"
             />
           </div>
@@ -95,14 +96,14 @@ export function DocumentCreate() {
               disabled={submitting || !title.trim()}
               className="px-4 py-3 text-xs font-mono rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-colors [background:var(--text-strong)] [color:var(--app-bg)] hover:opacity-90"
             >
-              {submitting ? 'Creating…' : 'Create document'}
+              {submitting ? t('creating') : t('createDocument')}
             </button>
             <button
               type="button"
               onClick={() => navigate('/')}
               className="px-4 py-2 text-xs font-mono transition-colors [color:var(--text-subtle)] hover:[color:var(--text-main)]"
             >
-              Cancel
+              {t('cancel')}
             </button>
           </div>
         </form>

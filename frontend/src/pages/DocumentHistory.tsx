@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { NavBar } from '../components/shared/NavBar'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { useLocale } from '../lib/i18n'
 
 interface AuditEvent {
   id: number
@@ -11,17 +12,6 @@ interface AuditEvent {
   block_id: number | null
   data: Record<string, unknown>
   created_at: string
-}
-
-const EVENT_LABELS: Record<string, string> = {
-  document_created: 'Document created',
-  block_created: 'Paragraph added',
-  block_edited: 'Paragraph revised',
-  suggestion_created: 'AI draft requested',
-  suggestion_accepted: 'AI draft approved',
-  suggestion_rejected: 'AI draft rejected',
-  snapshot_created: 'Snapshot created',
-  snapshot_exported: 'Snapshot exported to GitHub',
 }
 
 const EVENT_COLORS: Record<string, string> = {
@@ -35,52 +25,48 @@ const EVENT_COLORS: Record<string, string> = {
   snapshot_exported: '[color:var(--accent)]',
 }
 
-function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-function describeEvent(event: AuditEvent): string | null {
+function describeEvent(
+  event: AuditEvent,
+  t: (key: Parameters<ReturnType<typeof useLocale>['t']>[0], params?: Record<string, string | number>) => string,
+): string | null {
   if (event.event_type === 'suggestion_created') {
     const suggestionType = event.data.suggestion_type
-    return suggestionType ? `Requested an AI ${String(suggestionType)} draft.` : 'Requested an AI draft.'
+    return suggestionType
+      ? t('requestedAiDraftType', { type: String(suggestionType) })
+      : t('requestedAiDraft')
   }
   if (event.event_type === 'suggestion_accepted') {
     const decisionType = event.data.decision_type
     if (decisionType === 'accept_with_edits') {
-      return 'Approved an AI draft after revising the wording.'
+      return t('approvedAiDraftAfterRevision')
     }
-    return 'Approved the AI-proposed wording.'
+    return t('approvedAiWording')
   }
   if (event.event_type === 'suggestion_rejected') {
-    return 'Rejected the AI-proposed wording.'
+    return t('rejectedAiWording')
   }
   if (event.event_type === 'snapshot_created') {
     const version = event.data.version_number ?? event.data.version
-    return version ? `Saved snapshot v${String(version)}.` : 'Saved a snapshot.'
+    return version ? t('savedSnapshotVersion', { version: String(version) }) : t('savedSnapshot')
   }
   if (event.event_type === 'snapshot_exported') {
     const repo = event.data.github_repo ?? event.data.repo
-    return repo ? `Exported a snapshot to ${String(repo)}.` : 'Exported a snapshot to GitHub.'
+    return repo ? t('exportedSnapshotRepo', { repo: String(repo) }) : t('exportedSnapshot')
   }
   if (event.event_type === 'block_edited') {
-    return 'Saved a revision to this paragraph.'
+    return t('savedParagraphRevision')
   }
   if (event.event_type === 'block_created') {
-    return 'Added a new paragraph.'
+    return t('addedNewParagraph')
   }
   if (event.event_type === 'document_created') {
-    return 'Opened a new drafting document.'
+    return t('openedNewDocument')
   }
   return null
 }
 
 export function DocumentHistory() {
+  const { t, formatDate } = useLocale()
   const { id } = useParams<{ id: string }>()
   const docId = parseInt(id ?? '0', 10)
 
@@ -89,7 +75,7 @@ export function DocumentHistory() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  usePageTitle(docTitle ? `${docTitle} · Activity` : 'Activity')
+  usePageTitle(docTitle ? `${docTitle} · ${t('activity')}` : t('activity'))
 
   useEffect(() => {
     Promise.all([
@@ -107,18 +93,18 @@ export function DocumentHistory() {
   return (
     <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-main)]">
       <NavBar
-        back={{ to: `/documents/${docId}/edit`, label: 'editor' }}
-        title={docTitle || 'Activity'}
+        back={{ to: `/documents/${docId}/edit`, label: t('editor') }}
+        title={docTitle || t('activity')}
       />
 
       <main className="max-w-3xl mx-auto px-6 py-10">
         <h2 className="text-xs font-mono uppercase tracking-widest mb-8 [color:var(--text-subtle)]">
-          Document activity
+          {t('documentActivity')}
         </h2>
 
         {loading && (
           <p className="text-sm font-mono animate-pulse [color:var(--text-subtle)]">
-            Loading…
+            {t('loading')}
           </p>
         )}
 
@@ -129,7 +115,7 @@ export function DocumentHistory() {
         )}
 
         {!loading && events.length === 0 && (
-          <p className="text-sm font-mono [color:var(--text-subtle)]">No activity yet.</p>
+          <p className="text-sm font-mono [color:var(--text-subtle)]">{t('noActivityYet')}</p>
         )}
 
         {events.length > 0 && (
@@ -143,24 +129,41 @@ export function DocumentHistory() {
                       EVENT_COLORS[event.event_type] ?? '[color:var(--text-muted)]'
                     }`}
                   >
-                    {EVENT_LABELS[event.event_type] ?? event.event_type}
+                    {{
+                      document_created: t('eventDocumentCreated'),
+                      block_created: t('eventBlockCreated'),
+                      block_edited: t('eventBlockEdited'),
+                      suggestion_created: t('eventSuggestionCreated'),
+                      suggestion_accepted: t('eventSuggestionAccepted'),
+                      suggestion_rejected: t('eventSuggestionRejected'),
+                      snapshot_created: t('eventSnapshotCreated'),
+                      snapshot_exported: t('eventSnapshotExported'),
+                    }[event.event_type] ?? event.event_type}
                   </span>
                   <div className="mt-1 text-sm leading-7 [color:var(--text-main)]">
-                    {describeEvent(event)}
+                    {describeEvent(event, t)}
                   </div>
                   <div className="flex flex-wrap items-center gap-3 text-xs font-mono [color:var(--text-subtle)]">
                     {event.actor_username && (
                       <span>{event.actor_username}</span>
                     )}
-                    <span>{formatTime(event.created_at)}</span>
+                    <span>
+                      {formatDate(event.created_at, {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
                     {event.block_id && (
-                      <span>paragraph #{event.block_id}</span>
+                      <span>{t('paragraphNumber', { id: event.block_id })}</span>
                     )}
                   </div>
                   {Object.keys(event.data).length > 0 && (
                     <details className="mt-2">
                       <summary className="cursor-pointer text-[11px] font-mono uppercase tracking-[0.2em] [color:var(--text-subtle)]">
-                        Raw event data
+                        {t('rawEventData')}
                       </summary>
                       <pre className="mt-2 overflow-x-auto rounded-xl px-3 py-2 text-xs font-mono [color:var(--text-subtle)] [background:var(--surface-2)]">
                         {JSON.stringify(event.data, null, 2)}

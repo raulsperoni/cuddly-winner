@@ -46,3 +46,6 @@ Thumbs.db
 .dockerignore
 
 node_modules/
+
+# Visual audit screenshots
+scripts/screenshots/

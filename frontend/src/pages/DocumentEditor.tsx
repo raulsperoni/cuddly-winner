@@ -6,6 +6,7 @@ import { BlockList } from '../components/editor/BlockList'
 import { NavBar } from '../components/shared/NavBar'
 import type { Member } from '../api/types'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { useLocale } from '../lib/i18n'
 
 const SnapshotPanel = lazy(() =>
   import('../components/snapshots/SnapshotPanel').then((mod) => ({
@@ -14,6 +15,7 @@ const SnapshotPanel = lazy(() =>
 )
 
 export function DocumentEditor() {
+  const { t } = useLocale()
   const { id } = useParams<{ id: string }>()
   const documentId = parseInt(id ?? '0', 10)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -46,9 +48,9 @@ export function DocumentEditor() {
   const joinStatus = searchParams.get('join_status')
   const joinMessage =
     joinStatus === 'joined'
-      ? 'You can now review and edit this document.'
+      ? t('joinJoined')
       : joinStatus === 'already-has-access'
-        ? 'You already have editing access to this document.'
+        ? t('joinAlreadyHasAccess')
         : null
 
   const dismissJoinMessage = () => {
@@ -57,13 +59,13 @@ export function DocumentEditor() {
     setSearchParams(next, { replace: true })
   }
 
-  usePageTitle(document?.title ? `${document.title} · Editor` : 'Editor')
+  usePageTitle(document?.title ? `${document.title} · ${t('editor')}` : t('editor'))
 
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--app-bg)]">
         <div className="max-w-md rounded-2xl p-4 text-sm font-mono [color:var(--danger)] [border:1px_solid_var(--danger-soft)] [background:var(--danger-soft)]">
-          Failed to load document: {error}
+          {t('failedToLoadDocument', { error })}
         </div>
       </div>
     )
@@ -73,7 +75,7 @@ export function DocumentEditor() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--app-bg)]">
         <span className="text-sm font-mono animate-pulse [color:var(--text-subtle)]">
-          Loading…
+          {t('loading')}
         </span>
       </div>
     )
@@ -87,7 +89,7 @@ export function DocumentEditor() {
   return (
     <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-main)]">
       <NavBar
-        back={{ to: '/', label: 'documents' }}
+        back={{ to: '/', label: t('documents') }}
         title={document.title}
         share={{
           readOnlyPath: `/p/${document.public_token}/`,
@@ -98,38 +100,38 @@ export function DocumentEditor() {
             document.access_role === 'owner' ? handleRemoveMember : undefined,
         }}
         actions={
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
             {pendingCount > 0 && (
               <span className="text-xs font-mono [color:var(--accent)]">
-                {pendingCount} awaiting review
+                {t('awaitingReview', { count: pendingCount })}
               </span>
             )}
             <a
               href={`/documents/${documentId}/history/`}
-              className="text-xs font-mono transition-colors [color:var(--text-subtle)] hover:[color:var(--text-main)]"
+              className="hidden sm:inline text-xs font-mono transition-colors [color:var(--text-subtle)] hover:[color:var(--text-main)]"
             >
-              activity
+              {t('activity')}
             </a>
             <span
-              className={`px-1.5 py-0.5 text-xs font-mono rounded-sm border ${
+              className={`hidden sm:inline px-1.5 py-0.5 text-xs font-mono rounded-sm border ${
                 document.status === 'published'
                   ? '[border-color:var(--success)] [color:var(--success)]'
                   : '[border-color:var(--border-subtle)] [color:var(--text-subtle)]'
               }`}
             >
-              {document.status}
+              {document.status === 'published' ? t('statusPublished') : t('statusDraft')}
             </span>
             <span
-              className={`px-1.5 py-0.5 text-xs font-mono rounded-sm border ${
+              className={`hidden sm:inline px-1.5 py-0.5 text-xs font-mono rounded-sm border ${
                 document.access_role === 'owner'
                   ? '[border-color:var(--border-strong)] [color:var(--text-muted)]'
                   : '[border-color:var(--accent)] [color:var(--accent)]'
               }`}
             >
-              {document.access_role === 'owner' ? 'owner' : 'collaborator'}
+              {document.access_role === 'owner' ? t('owner') : t('collaborator')}
             </span>
-            <span className="text-xs font-mono [color:var(--text-subtle)]">
-              {blocks.length} paragraph{blocks.length !== 1 ? 's' : ''}
+            <span className="hidden sm:inline text-xs font-mono [color:var(--text-subtle)]">
+              {t('paragraphsCount', { count: blocks.length })}
             </span>
           </div>
         }
@@ -143,7 +145,7 @@ export function DocumentEditor() {
               onClick={dismissJoinMessage}
               className="text-xs font-mono transition-colors [color:var(--success)] hover:opacity-80"
             >
-              dismiss
+              {t('dismiss')}
             </button>
           </div>
         </div>
@@ -166,7 +168,7 @@ export function DocumentEditor() {
           fallback={
             <div className="mt-8 border-t [border-color:var(--border-subtle)]">
               <div className="mx-auto max-w-4xl px-6 py-4 text-xs font-mono animate-pulse [color:var(--text-subtle)]">
-                Loading revisions…
+                {t('revisionsLoading')}
               </div>
             </div>
           }

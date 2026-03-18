@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Member } from '../../api/types'
+import { useLocale, type Locale } from '../../lib/i18n'
 import { BRAND_NAME } from '../../lib/brand'
 
 interface ShareProps {
@@ -62,6 +63,7 @@ function CopyField({
   value: string
   note?: string
 }) {
+  const { t } = useLocale()
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
@@ -87,7 +89,7 @@ function CopyField({
             onClick={handleCopy}
             className="flex-shrink-0 px-2 py-0.5 text-[10px] font-mono rounded border transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
           >
-            {copied ? '✓ copied' : 'copy'}
+            {copied ? t('copied') : t('copy')}
           </button>
         </div>
       </div>
@@ -104,6 +106,7 @@ function MemberList({
   canManageMembers?: boolean
   onRemoveMember?: (userId: number) => Promise<void>
 }) {
+  const { t } = useLocale()
   const [removingUserId, setRemovingUserId] = useState<number | null>(null)
 
   if (members.length === 0) return null
@@ -121,7 +124,7 @@ function MemberList({
   return (
     <div className="space-y-2 border-t pt-3 [border-color:var(--border-subtle)]">
       <div className="text-[10px] font-mono uppercase tracking-[0.2em] [color:var(--text-subtle)]">
-        Collaborators
+        {t('collaborators')}
       </div>
       <div className="space-y-1.5">
         {members.map((member) => (
@@ -143,7 +146,7 @@ function MemberList({
                 disabled={removingUserId === member.user_id}
                 className="text-[10px] font-mono transition-colors disabled:opacity-50 [color:var(--text-subtle)] hover:[color:var(--danger)]"
               >
-                {removingUserId === member.user_id ? '…' : 'remove'}
+                {removingUserId === member.user_id ? '…' : t('remove')}
               </button>
             ) : null}
           </div>
@@ -160,6 +163,7 @@ function SharePopover({
   share: ShareProps
   onClose: () => void
 }) {
+  const { t } = useLocale()
   const ref = useRef<HTMLDivElement>(null)
   const readOnlyLink = buildAbsoluteUrl(share.readOnlyPath)
   const inviteLink = buildAbsoluteUrl(share.invitePath)
@@ -170,7 +174,6 @@ function SharePopover({
         onClose()
       }
     }
-    // Use capture so it fires before any stopPropagation inside
     document.addEventListener('mousedown', handler, true)
     return () => document.removeEventListener('mousedown', handler, true)
   }, [onClose])
@@ -181,18 +184,18 @@ function SharePopover({
       className="absolute right-0 top-full z-30 mt-2 w-[26rem] max-w-[calc(100vw-2rem)] rounded-xl border p-4 shadow-xl backdrop-blur-sm [border-color:var(--border-subtle)] [background:var(--surface-elevated)]"
     >
       <div className="mb-3 text-[10px] font-mono uppercase tracking-[0.2em] [color:var(--text-subtle)]">
-        Share document
+        {t('share')}
       </div>
       <div className="space-y-3">
         <CopyField
-          label="Reading link"
+          label={t('readingLink')}
           value={readOnlyLink}
-          note="View-only access to the current draft."
+          note={t('readingLinkNote')}
         />
         <CopyField
-          label="Editing invite"
+          label={t('editingInvite')}
           value={inviteLink}
-          note="Signed-in users join as collaborators."
+          note={t('editingInviteNote')}
         />
         <MemberList
           members={share.members ?? []}
@@ -205,6 +208,7 @@ function SharePopover({
 }
 
 export function NavBar({ back, title, actions, share }: Props) {
+  const { locale, setLocale, t } = useLocale()
   const [shareOpen, setShareOpen] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>(
     (window.__cwTheme as 'light' | 'dark' | undefined) ?? 'dark',
@@ -224,81 +228,119 @@ export function NavBar({ back, title, actions, share }: Props) {
     setTheme(next)
   }
 
+  const languageOptions: Locale[] = ['en', 'es']
+  // Doc row only when there's actual document context (not just loose actions)
+  const hasDocRow = !!(back || title || share)
+
   return (
-    <header className="sticky top-0 z-20 border-b backdrop-blur-sm [border-color:var(--border-subtle)] [background:var(--surface-elevated)]">
-      <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-6">
-        {/* ── Left ── */}
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          {back ? (
-            <Link
-              to={back.to}
-              className="flex-shrink-0 text-xs font-mono transition-colors [color:var(--text-muted)] hover:[color:var(--text-main)]"
-            >
-              ← {back.label}
-            </Link>
-          ) : (
-            <Link
-              to="/"
-              className="flex-shrink-0 text-sm font-mono font-medium transition-opacity hover:opacity-75 [color:var(--text-main)]"
-            >
-              {BRAND_NAME}
-            </Link>
-          )}
+    <header className="sticky top-0 z-20 backdrop-blur-sm [background:var(--surface-elevated)]">
 
-          {title && (
-            <>
-              <span className="flex-shrink-0 text-sm select-none [color:var(--border-strong)]">/</span>
-              <span className="truncate text-sm prose-font leading-tight [color:var(--text-main)]">
-                {title}
-              </span>
-            </>
-          )}
-        </div>
-
-        {/* ── Right ── */}
-        <div className="flex flex-shrink-0 items-center gap-1.5">
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
+      {/* ── Row 1: brand + session ─────────────────────────────────── */}
+      <div className="border-b [border-color:var(--border-subtle)]">
+        <div className="mx-auto flex h-10 max-w-5xl items-center justify-between px-6">
+          <Link
+            to="/"
+            className="text-sm font-mono font-medium transition-opacity hover:opacity-75 [color:var(--text-main)]"
           >
-            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-          </button>
+            {BRAND_NAME}
+          </Link>
 
-          {/* Injected actions (e.g. "+ New document", snapshot button) */}
-          {actions}
-
-          {/* Share */}
-          {share ? (
-            <div className="relative">
-              <button
-                onClick={() => setShareOpen((open) => !open)}
-                className="h-8 rounded-lg border px-3 text-xs font-mono transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
-              >
-                Share
-              </button>
-              {shareOpen ? (
-                <SharePopover share={share} onClose={() => setShareOpen(false)} />
-              ) : null}
+          <div className="flex items-center gap-1.5">
+            <div className="hidden lg:flex items-center rounded-lg border [border-color:var(--border-subtle)]">
+              {languageOptions.map((option) => (
+                <button
+                  key={option}
+                  onClick={() => setLocale(option)}
+                  className={`px-2 py-1 text-[10px] font-mono uppercase tracking-[0.2em] transition-colors ${
+                    option === locale
+                      ? '[background:var(--surface-2)] [color:var(--text-main)]'
+                      : '[color:var(--text-subtle)] hover:[color:var(--text-main)]'
+                  }`}
+                  aria-label={`${t('languageToggleLabel')}: ${option}`}
+                >
+                  {option === 'en' ? t('languageEnglish') : t('languageSpanish')}
+                </button>
+              ))}
             </div>
-          ) : null}
 
-          {/* User section */}
-          {username && (
-            <div className="flex items-center gap-2.5 border-l pl-3 [border-color:var(--border-subtle)]">
-              <span className="text-xs font-mono [color:var(--text-subtle)]">{username}</span>
-              <a
-                href="/accounts/logout/"
-                title="Sign out"
-                className="text-xs font-mono transition-colors [color:var(--text-subtle)] hover:[color:var(--text-main)]"
-              >
-                ↩
-              </a>
-            </div>
-          )}
+            <button
+              onClick={toggleTheme}
+              title={theme === 'dark' ? t('lightMode') : t('darkMode')}
+              className="flex h-7 w-7 items-center justify-center rounded-md border transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
+            >
+              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </button>
+
+            {/* Page-level actions with no document context (e.g. "+ New document") */}
+            {!hasDocRow && actions ? actions : null}
+
+            {username ? (
+              <div className="flex items-center gap-2 sm:border-l sm:pl-2.5 [border-color:var(--border-subtle)]">
+                <span className="hidden sm:inline text-xs font-mono [color:var(--text-subtle)]">
+                  {username}
+                </span>
+                <a
+                  href="/accounts/logout/"
+                  title={t('signOut')}
+                  className="text-xs font-mono transition-colors [color:var(--text-subtle)] hover:[color:var(--text-main)]"
+                >
+                  ↩
+                </a>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
+
+      {/* ── Row 2: document context (conditional) ──────────────────── */}
+      {hasDocRow && (
+        <div className="border-b [border-color:var(--border-subtle)]">
+          <div className="mx-auto flex h-10 max-w-5xl items-center justify-between gap-4 px-6">
+
+            {/* Left: back + title */}
+            <div className="flex min-w-0 items-center gap-2">
+              {back ? (
+                <Link
+                  to={back.to}
+                  className="flex-shrink-0 text-xs font-mono transition-colors [color:var(--text-muted)] hover:[color:var(--text-main)]"
+                >
+                  ← {back.label}
+                </Link>
+              ) : null}
+              {title ? (
+                <>
+                  {back ? (
+                    <span className="flex-shrink-0 text-sm select-none [color:var(--border-strong)]">/</span>
+                  ) : null}
+                  <span className="truncate text-sm prose-font leading-tight [color:var(--text-main)]">
+                    {title}
+                  </span>
+                </>
+              ) : null}
+            </div>
+
+            {/* Right: doc actions + share */}
+            <div className="flex flex-shrink-0 items-center gap-2">
+              {actions}
+              {share ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setShareOpen((open) => !open)}
+                    className="h-7 rounded-md border px-3 text-xs font-mono transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
+                  >
+                    {t('share')}
+                  </button>
+                  {shareOpen ? (
+                    <SharePopover share={share} onClose={() => setShareOpen(false)} />
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </header>
   )
 }

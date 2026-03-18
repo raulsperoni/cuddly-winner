@@ -5,6 +5,7 @@ import { api } from '../../api/client'
 import { useDocumentStore } from '../../stores/document'
 import { useUIStore } from '../../stores/ui'
 import type { Block } from '../../api/types'
+import { useLocale } from '../../lib/i18n'
 
 const SuggestionPanel = lazy(() =>
   import('../suggestions/SuggestionPanel').then((mod) => ({
@@ -18,19 +19,13 @@ const LineagePanel = lazy(() =>
   })),
 )
 
-const SUGGESTION_TYPES = [
-  { key: 'improve', label: 'Clarify' },
-  { key: 'rewrite', label: 'Rephrase' },
-  { key: 'shorten', label: 'Condense' },
-  { key: 'expand', label: 'Expand' },
-] as const
-
 interface Props {
   block: Block
   documentId: number
 }
 
 export function BlockItem({ block, documentId }: Props) {
+  const { t } = useLocale()
   const [hovered, setHovered] = useState(false)
   const [customOpen, setCustomOpen] = useState(false)
   const [customInstruction, setCustomInstruction] = useState('')
@@ -49,6 +44,12 @@ export function BlockItem({ block, documentId }: Props) {
   const isLineageOpen = lineageOpenIds.has(block.id)
   const pendingSuggestions = block.pending_suggestions ?? []
   const hasPending = pendingSuggestions.length > 0
+  const suggestionTypes = [
+    { key: 'improve', label: t('clarify') },
+    { key: 'rewrite', label: t('rephrase') },
+    { key: 'shorten', label: t('condense') },
+    { key: 'expand', label: t('expand') },
+  ] as const
 
   const handleSave = async (text: string) => {
     const updated = await api.patchBlock(documentId, block.id, text)
@@ -116,7 +117,7 @@ export function BlockItem({ block, documentId }: Props) {
               )}
               {hasPending && (
                 <span className="text-[11px] font-mono [color:var(--accent)]">
-                  {pendingSuggestions.length} pending review
+                  {t('pendingReview', { count: pendingSuggestions.length })}
                 </span>
               )}
             </div>
@@ -128,7 +129,7 @@ export function BlockItem({ block, documentId }: Props) {
                   : 'opacity-0 pointer-events-none'
               }`}
             >
-              {SUGGESTION_TYPES.map(({ key, label }) => (
+              {suggestionTypes.map(({ key, label }) => (
                 <button
                   key={key}
                   onClick={() => handleRequestSuggestion(key)}
@@ -141,7 +142,7 @@ export function BlockItem({ block, documentId }: Props) {
                 onClick={() => setCustomOpen((v) => !v)}
                 className="px-2 py-0.5 text-[11px] font-mono rounded-sm transition-colors [color:var(--text-subtle)] hover:[color:var(--accent)] hover:[background:var(--accent-soft)]"
               >
-                Ask AI…
+                {t('askAi')}
               </button>
             </div>
           </div>
@@ -156,7 +157,7 @@ export function BlockItem({ block, documentId }: Props) {
                 type="text"
                 value={customInstruction}
                 onChange={(e) => setCustomInstruction(e.target.value)}
-                placeholder="e.g. this is too broad, tighten the scope"
+                placeholder={t('customInstructionPlaceholder')}
                 className="flex-1 rounded px-2 py-1 text-xs font-mono focus:outline-none [background:var(--app-bg-soft)] [border:1px_solid_var(--border-subtle)] [color:var(--text-main)] placeholder:[color:var(--text-subtle)] focus:[border-color:var(--accent)]"
               />
               <button
@@ -164,14 +165,14 @@ export function BlockItem({ block, documentId }: Props) {
                 disabled={!customInstruction.trim()}
                 className="px-2 py-1 text-[11px] font-mono rounded-sm border disabled:opacity-40 transition-colors [background:var(--accent)] [border-color:var(--accent)] text-white"
               >
-                Ask
+                {t('ask')}
               </button>
               <button
                 type="button"
                 onClick={() => { setCustomOpen(false); setCustomInstruction('') }}
                 className="text-[11px] font-mono [color:var(--text-subtle)] hover:[color:var(--text-main)]"
               >
-                Cancel
+                {t('cancel')}
               </button>
             </form>
           )}
@@ -180,7 +181,7 @@ export function BlockItem({ block, documentId }: Props) {
             {isLoading && (
               <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl [background:color-mix(in_srgb,var(--app-bg)_78%,transparent)]">
                 <span className="text-xs font-mono animate-pulse [color:var(--accent)]">
-                  Preparing review draft…
+                  {t('preparingReviewDraft')}
                 </span>
               </div>
             )}
@@ -199,7 +200,7 @@ export function BlockItem({ block, documentId }: Props) {
             <Suspense
               fallback={
                 <div className="text-xs font-mono [color:var(--text-subtle)]">
-                  Loading history…
+                  {t('loadingHistory')}
                 </div>
               }
             >
@@ -218,7 +219,7 @@ export function BlockItem({ block, documentId }: Props) {
         <Suspense
           fallback={
             <div className="mt-4 text-xs font-mono animate-pulse [color:var(--text-subtle)]">
-              Loading review draft…
+              {t('loadingReviewDraft')}
             </div>
           }
         >

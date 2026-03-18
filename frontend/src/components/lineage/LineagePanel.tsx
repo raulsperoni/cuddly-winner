@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../api/client'
 import type { BlockVersion } from '../../api/types'
+import { useLocale } from '../../lib/i18n'
 
 interface Props {
   blockId: number
@@ -9,21 +10,8 @@ interface Props {
   onToggle: () => void
 }
 
-function formatTime(dateStr: string): string {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMins / 60)
-  const diffDays = Math.floor(diffHours / 24)
-  if (diffMins < 1) return 'just now'
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 30) return `${diffDays}d ago`
-  return date.toLocaleDateString()
-}
-
 export function LineagePanel({ blockId, documentId, isOpen, onToggle }: Props) {
+  const { t, formatRelativeTime } = useLocale()
   const [versions, setVersions] = useState<BlockVersion[]>([])
   const [loading, setLoading] = useState(false)
   const [fetched, setFetched] = useState(false)
@@ -56,15 +44,15 @@ export function LineagePanel({ blockId, documentId, isOpen, onToggle }: Props) {
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
-        View history
+        {t('viewHistory')}
       </button>
 
       {isOpen && (
         <div className="mt-2 border-l pl-3 [border-color:var(--border-subtle)]">
           {loading ? (
-            <div className="text-xs font-mono py-1 [color:var(--text-subtle)]">Loading…</div>
+            <div className="text-xs font-mono py-1 [color:var(--text-subtle)]">{t('loading')}</div>
           ) : versions.length === 0 ? (
-            <div className="text-xs font-mono py-1 [color:var(--text-subtle)]">No revisions yet</div>
+            <div className="text-xs font-mono py-1 [color:var(--text-subtle)]">{t('noRevisionsYet')}</div>
           ) : (
             <ol className="space-y-2">
               {versions.map((v, i) => (
@@ -77,26 +65,26 @@ export function LineagePanel({ blockId, documentId, isOpen, onToggle }: Props) {
                     />
                     <div className="leading-relaxed">
                       <span className="[color:var(--text-subtle)]">
-                        revision {versions.length - i}{' '}
+                        {t('revision', { count: versions.length - i })}{' '}
                       </span>
                       {v.author_type === 'ai' ? (
-                        <span className="[color:var(--accent)]">AI-approved draft</span>
+                        <span className="[color:var(--accent)]">{t('aiApprovedDraft')}</span>
                       ) : (
                         <span className="[color:var(--text-main)]">
                           {v.author_username ?? 'you'}
                         </span>
                       )}
                       <span className="[color:var(--text-subtle)]">
-                        {' '}· {formatTime(v.created_at)}
+                        {' '}· {formatRelativeTime(v.created_at)}
                       </span>
                       {v.is_current && (
-                        <span className="ml-1.5 [color:var(--text-subtle)]">current</span>
+                        <span className="ml-1.5 [color:var(--text-subtle)]">{t('current')}</span>
                       )}
                       {v.author_type === 'ai' && v.decision && (
                         <div className="mt-1 text-[11px] [color:var(--text-subtle)]">
-                          Approved by {v.decision.decided_by_username}
+                          {t('approvedBy', { name: v.decision.decided_by_username })}
                           {v.decision.decision_type === 'accept_with_edits'
-                            ? ' after revision'
+                            ? ` ${t('afterRevision')}`
                             : ''}
                         </div>
                       )}

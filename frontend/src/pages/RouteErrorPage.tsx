@@ -1,11 +1,15 @@
 import { isRouteErrorResponse, Link, useRouteError } from 'react-router-dom'
+import { useLocale } from '../lib/i18n'
 
-function getErrorMessage(error: unknown): { title: string; detail: string } {
+function getErrorMessage(
+  error: unknown,
+  t: ReturnType<typeof useLocale>['t'],
+): { title: string; detail: string } {
   if (isRouteErrorResponse(error)) {
     if (error.status === 404) {
       return {
-        title: 'Page not found',
-        detail: 'The page or document route you requested could not be found.',
+        title: t('pageNotFound'),
+        detail: t('routeNotFoundDetail'),
       }
     }
     return {
@@ -13,33 +17,34 @@ function getErrorMessage(error: unknown): { title: string; detail: string } {
       detail:
         typeof error.data === 'string'
           ? error.data
-          : 'The application could not complete this request.',
+          : t('requestFailed'),
     }
   }
 
   if (error instanceof Error) {
     return {
-      title: 'Something went wrong',
+      title: t('somethingWentWrong'),
       detail: error.message,
     }
   }
 
   return {
-    title: 'Something went wrong',
-    detail: 'An unexpected application error occurred.',
+    title: t('somethingWentWrong'),
+    detail: t('unexpectedError'),
   }
 }
 
 export function RouteErrorPage() {
+  const { t } = useLocale()
   const error = useRouteError()
-  const message = getErrorMessage(error)
+  const message = getErrorMessage(error, t)
 
   return (
     <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-main)]">
       <main className="mx-auto flex min-h-screen max-w-3xl items-center px-6 py-12">
         <section className="w-full rounded-3xl border p-8 shadow-2xl shadow-black/10 [border-color:var(--border-subtle)] [background:var(--surface-1)]">
           <div className="text-[11px] font-mono uppercase tracking-[0.25em] [color:var(--text-subtle)]">
-            Routing error
+            {t('routingError')}
           </div>
           <h1 className="prose-font mt-4 text-3xl leading-tight [color:var(--text-strong)]">
             {message.title}
@@ -52,13 +57,13 @@ export function RouteErrorPage() {
               to="/"
               className="rounded-xl px-4 py-3 text-xs font-mono uppercase tracking-[0.2em] transition [background:var(--text-strong)] [color:var(--app-bg)] hover:opacity-90"
             >
-              Go to documents
+              {t('goToDocuments')}
             </Link>
             <button
               onClick={() => window.location.reload()}
               className="px-4 py-3 text-xs font-mono uppercase tracking-[0.2em] transition [color:var(--text-subtle)] hover:[color:var(--text-main)]"
             >
-              Reload page
+              {t('reloadPage')}
             </button>
           </div>
         </section>

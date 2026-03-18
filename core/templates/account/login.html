@@ -1,11 +1,11 @@
 {% extends "account/base_auth.html" %}
 
-{% block title %}Sign In{% endblock %}
-{% block eyebrow %}Shared drafting workspace{% endblock %}
-{% block heading %}Sign in to continue drafting with full traceability.{% endblock %}
-{% block intro %}Review AI-proposed wording, approve revisions with a visible decision trail, and collaborate on policy, institutional, or public-interest documents without losing provenance.{% endblock %}
+{% block title %}{% app_t 'sign_in' %}{% endblock %}
+{% block eyebrow %}{% app_t 'shared_workspace' %}{% endblock %}
+{% block heading %}{% app_t 'login_heading' %}{% endblock %}
+{% block intro %}{% app_t 'login_intro' %}{% endblock %}
 {% block panel %}
-  <div class="mono-font text-[11px] uppercase tracking-[0.25em] [color:var(--text-subtle)]">Sign in</div>
+  <div class="mono-font text-[11px] uppercase tracking-[0.25em] [color:var(--text-subtle)]">{% app_t 'sign_in' %}</div>
   <form method="post" action="{% url 'account_login' %}" class="mt-6 space-y-5">
     {% csrf_token %}
     {% if form.non_field_errors %}
@@ -40,11 +40,11 @@
       type="submit"
       class="mono-font w-full rounded-xl px-4 py-3 text-xs uppercase tracking-[0.2em] text-white transition hover:opacity-90 [background:var(--text-main)]"
     >
-      Sign in
+      {% app_t 'sign_in' %}
     </button>
   </form>
   <div class="mt-6 flex flex-wrap items-center gap-4 text-sm [color:var(--text-muted)]">
-    <a href="{% url 'account_reset_password' %}" class="[color:var(--text-main)] hover:opacity-80">Forgot password?</a>
-    <span>New here? <a href="{% url 'account_signup' %}" class="[color:var(--text-main)] hover:opacity-80">Create an account</a></span>
+    <a href="{% url 'account_reset_password' %}" class="[color:var(--text-main)] hover:opacity-80">{% app_t 'forgot_password' %}</a>
+    <span>{% app_t 'new_here' %} <a href="{% url 'account_signup' %}" class="[color:var(--text-main)] hover:opacity-80">{% app_t 'create_account' %}</a></span>
   </div>
 {% endblock %}

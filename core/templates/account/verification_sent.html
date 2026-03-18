@@ -1,11 +1,11 @@
 {% extends "account/base_auth.html" %}
 
-{% block title %}Verification Sent{% endblock %}
-{% block eyebrow %}Email verification{% endblock %}
-{% block heading %}Verification email sent.{% endblock %}
-{% block intro %}Open the message we sent and confirm your address to complete the process. If it does not arrive, check spam or request another one from account settings.{% endblock %}
+{% block title %}{% app_t 'verification_sent' %}{% endblock %}
+{% block eyebrow %}{% app_t 'email_verification' %}{% endblock %}
+{% block heading %}{% app_t 'verification_sent_heading' %}{% endblock %}
+{% block intro %}{% app_t 'verification_sent_intro' %}{% endblock %}
 {% block panel %}
   <a href="{% url 'account_email' %}" class="mono-font inline-block rounded-xl border px-4 py-3 text-xs uppercase tracking-[0.2em] transition [border-color:var(--border-subtle)] [color:var(--text-main)] hover:[border-color:var(--border-strong)]">
-    Manage email addresses
+    {% app_t 'manage_email_addresses' %}
   </a>
 {% endblock %}

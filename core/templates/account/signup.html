@@ -1,11 +1,11 @@
 {% extends "account/base_auth.html" %}
 
-{% block title %}Create Account{% endblock %}
-{% block eyebrow %}Join the drafting process{% endblock %}
-{% block heading %}Create an account to participate in review and revision.{% endblock %}
-{% block intro %}Use your account to join shared drafting workspaces, review AI-proposed language, and keep a visible record of what was accepted, revised, or declined.{% endblock %}
+{% block title %}{% app_t 'create_account' %}{% endblock %}
+{% block eyebrow %}{% app_t 'join_process' %}{% endblock %}
+{% block heading %}{% app_t 'signup_heading' %}{% endblock %}
+{% block intro %}{% app_t 'signup_intro' %}{% endblock %}
 {% block panel %}
-  <div class="mono-font text-[11px] uppercase tracking-[0.25em] [color:var(--text-subtle)]">Create account</div>
+  <div class="mono-font text-[11px] uppercase tracking-[0.25em] [color:var(--text-subtle)]">{% app_t 'create_account' %}</div>
   <form method="post" action="{% url 'account_signup' %}" class="mt-6 space-y-5">
     {% csrf_token %}
     {% if form.non_field_errors %}
@@ -38,11 +38,11 @@
       type="submit"
       class="mono-font w-full rounded-xl px-4 py-3 text-xs uppercase tracking-[0.2em] text-white transition hover:opacity-90 [background:var(--text-main)]"
     >
-      Create account
+      {% app_t 'create_account' %}
     </button>
   </form>
   <p class="mt-6 text-sm [color:var(--text-muted)]">
-    Already have an account?
-    <a href="{% url 'account_login' %}" class="[color:var(--text-main)] hover:opacity-80">Sign in</a>
+    {% app_t 'already_have_account' %}
+    <a href="{% url 'account_login' %}" class="[color:var(--text-main)] hover:opacity-80">{% app_t 'sign_in' %}</a>
   </p>
 {% endblock %}

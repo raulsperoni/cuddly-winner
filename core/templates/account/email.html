@@ -1,11 +1,11 @@
 {% extends "account/base_auth.html" %}
 
-{% block title %}Email Addresses{% endblock %}
-{% block eyebrow %}Account settings{% endblock %}
-{% block heading %}Manage the email addresses tied to your drafting account.{% endblock %}
-{% block intro %}Your email address is used for account recovery and, when enabled, verification of collaboration access. Keep it current and secure.{% endblock %}
+{% block title %}{% app_t 'email_addresses' %}{% endblock %}
+{% block eyebrow %}{% app_t 'account_settings' %}{% endblock %}
+{% block heading %}{% app_t 'manage_emails_heading' %}{% endblock %}
+{% block intro %}{% app_t 'manage_emails_intro' %}{% endblock %}
 {% block panel %}
-  <div class="mono-font text-[11px] uppercase tracking-[0.25em] [color:var(--text-subtle)]">Email addresses</div>
+  <div class="mono-font text-[11px] uppercase tracking-[0.25em] [color:var(--text-subtle)]">{% app_t 'email_addresses_label' %}</div>
 
   {% if form.non_field_errors %}
     <div class="mt-6 rounded-xl px-4 py-3 text-sm [color:var(--danger)] [border:1px_solid_var(--danger-soft)] [background:var(--danger-soft)]">
@@ -31,12 +31,12 @@
               <span class="block text-sm [color:var(--text-main)]">{{ emailaddress.email }}</span>
               <span class="mono-font mt-1 block text-[11px] uppercase tracking-[0.2em]">
                 {% if emailaddress.verified %}
-                  <span class="[color:var(--success)]">Verified</span>
+                  <span class="[color:var(--success)]">{% app_t 'verified' %}</span>
                 {% else %}
-                  <span class="[color:var(--accent)]">Unverified</span>
+                  <span class="[color:var(--accent)]">{% app_t 'unverified' %}</span>
                 {% endif %}
                 {% if emailaddress.primary %}
-                  <span class="ml-2 [color:var(--text-subtle)]">Primary</span>
+                  <span class="ml-2 [color:var(--text-subtle)]">{% app_t 'primary' %}</span>
                 {% endif %}
               </span>
             </span>
@@ -46,24 +46,24 @@
 
       <div class="flex flex-wrap gap-3">
         <button type="submit" name="action_primary" class="mono-font rounded-xl px-4 py-3 text-xs uppercase tracking-[0.2em] text-white transition hover:opacity-90 [background:var(--text-main)]">
-          Make primary
+          {% app_t 'make_primary' %}
         </button>
         <button type="submit" name="action_send" class="mono-font rounded-xl border px-4 py-3 text-xs uppercase tracking-[0.2em] transition [border-color:var(--border-subtle)] [color:var(--text-main)] hover:[border-color:var(--border-strong)]">
-          Re-send verification
+          {% app_t 'resend_verification' %}
         </button>
         <button type="submit" name="action_remove" class="mono-font px-4 py-3 text-xs uppercase tracking-[0.2em] transition [color:var(--danger)] hover:opacity-80">
-          Remove
+          {% app_t 'remove' %}
         </button>
       </div>
     </form>
   {% else %}
-    <p class="mt-6 text-sm leading-7 [color:var(--text-muted)]">No email addresses are associated with this account yet.</p>
+    <p class="mt-6 text-sm leading-7 [color:var(--text-muted)]">{% app_t 'no_email_addresses' %}</p>
   {% endif %}
 
   {% if can_add_email %}
     <form method="post" action="{% url 'account_email' %}" class="mt-8 space-y-5">
       {% csrf_token %}
-      <div class="mono-font text-[11px] uppercase tracking-[0.25em] [color:var(--text-subtle)]">Add email</div>
+      <div class="mono-font text-[11px] uppercase tracking-[0.25em] [color:var(--text-subtle)]">{% app_t 'add_email' %}</div>
       {% for field in form %}
         {% if field.name == 'email' %}
           <div>
@@ -85,7 +85,7 @@
         {% endif %}
       {% endfor %}
       <button type="submit" name="action_add" class="mono-font rounded-xl border px-4 py-3 text-xs uppercase tracking-[0.2em] transition [border-color:var(--border-subtle)] [color:var(--text-main)] hover:[border-color:var(--border-strong)]">
-        Add email address
+        {% app_t 'add_email_address' %}
       </button>
     </form>
   {% endif %}

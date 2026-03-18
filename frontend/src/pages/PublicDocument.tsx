@@ -8,8 +8,10 @@ import type { PublicBlock, PublicDocument as PublicDocumentType } from '../api/t
 import { AuthorshipBadge } from '../components/shared/AuthorshipBadge'
 import { BRAND_DOMAIN, BRAND_NAME, BRAND_TAGLINE } from '../lib/brand'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { useLocale } from '../lib/i18n'
 
 function PublicBlockView({ block }: { block: PublicBlock }) {
+  const { t } = useLocale()
   const content = block.current_version?.text ?? ''
   const editor = useEditor(
     {
@@ -51,7 +53,7 @@ function PublicBlockView({ block }: { block: PublicBlock }) {
             className="prose-font text-[20px] leading-[1.95] [color:var(--text-main)]"
           />
         ) : (
-          <p className="prose-font text-[20px] italic [color:var(--text-subtle)]">Empty paragraph</p>
+          <p className="prose-font text-[20px] italic [color:var(--text-subtle)]">{t('emptyParagraph')}</p>
         )}
       </div>
     </article>
@@ -59,12 +61,13 @@ function PublicBlockView({ block }: { block: PublicBlock }) {
 }
 
 export function PublicDocument() {
+  const { t } = useLocale()
   const { token } = useParams<{ token: string }>()
   const [document, setDocument] = useState<PublicDocumentType | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  usePageTitle(document?.title ? `${document.title} · Shared draft` : 'Shared draft')
+  usePageTitle(document?.title ? `${document.title} · ${t('sharedDraft')}` : t('sharedDraft'))
 
   useEffect(() => {
     if (!token) return
@@ -89,30 +92,29 @@ export function PublicDocument() {
             {document ? (
               <h1 className="mt-2 text-3xl prose-font leading-tight [color:var(--text-strong)]">{document.title}</h1>
             ) : (
-              <h1 className="mt-2 text-3xl prose-font leading-tight [color:var(--text-strong)]">Shared document</h1>
+              <h1 className="mt-2 text-3xl prose-font leading-tight [color:var(--text-strong)]">{t('sharedDocument')}</h1>
             )}
             <p className="mt-3 max-w-xl text-sm leading-7 [color:var(--text-muted)]">
-              {BRAND_TAGLINE}. This link is for reading and circulation. Sign in to join
-              the drafting team when you have an editing invite.
+              {BRAND_TAGLINE}. {t('publicDocumentIntro')}
             </p>
           </div>
           <a
             href="/accounts/login/"
             className="rounded-xl border px-3 py-2 text-[11px] font-mono uppercase tracking-[0.2em] transition-colors [border-color:var(--border-subtle)] [color:var(--text-muted)] hover:[border-color:var(--border-strong)] hover:[color:var(--text-main)]"
           >
-            Sign in
+            {t('signIn')}
           </a>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-10">
         {loading ? (
-          <p className="text-sm font-mono animate-pulse [color:var(--text-subtle)]">Loading…</p>
+          <p className="text-sm font-mono animate-pulse [color:var(--text-subtle)]">{t('loading')}</p>
         ) : null}
 
         {error ? (
           <div className="rounded-xl p-4 text-sm font-mono [color:var(--danger)] [border:1px_solid_var(--danger-soft)] [background:var(--danger-soft)]">
-            Failed to load public document: {error}
+            {t('failedToLoadPublicDocument', { error })}
           </div>
         ) : null}
 
@@ -130,7 +132,7 @@ export function PublicDocument() {
                 ))}
               </div>
             ) : (
-              <p className="mt-6 text-sm font-mono [color:var(--text-subtle)]">No paragraphs yet.</p>
+              <p className="mt-6 text-sm font-mono [color:var(--text-subtle)]">{t('noParagraphsYet')}</p>
             )}
           </div>
         ) : null}
