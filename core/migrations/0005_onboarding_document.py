@@ -25,7 +25,7 @@ def ensure_onboarding_column(apps, schema_editor):
 
     schema_editor.execute(
         f"ALTER TABLE {table} "
-        "ADD COLUMN is_onboarding bool NOT NULL DEFAULT 0"
+        "ADD COLUMN is_onboarding boolean NOT NULL DEFAULT FALSE"
     )
 
 
