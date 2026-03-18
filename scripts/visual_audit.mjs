@@ -29,6 +29,8 @@ async function px(page, name) {
 
 /** Clip-shot a DOM element identified by CSS selector (nth = 0-based index) */
 async function el(page, selector, name, nth = 0) {
+  // Wait for element to appear in the DOM first
+  await page.waitForSelector(selector, { timeout: 10000 })
   const box = await page.evaluate(({ sel, n }) => {
     const els = document.querySelectorAll(sel)
     const el = els[n]
@@ -52,10 +54,10 @@ async function login(page) {
 
 async function goEditor(page) {
   await page.goto(`${BASE}/documents/${DOC_ID}/edit/`, { waitUntil: 'networkidle' })
-  await page.waitForTimeout(2000)
-  // Confirm React rendered blocks — if not, give it more time
-  const loaded = await page.locator('.group').first().isVisible().catch(() => false)
-  if (!loaded) await page.waitForTimeout(2000)
+  // Wait for React to mount and render the block list
+  await page.waitForSelector('header', { timeout: 15000 })
+  await page.waitForSelector('.group', { timeout: 15000 }).catch(() => null)
+  await page.waitForTimeout(500)
 }
 
 /** Scroll an element into view then hover it */
