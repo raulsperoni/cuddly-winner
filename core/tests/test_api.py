@@ -729,6 +729,31 @@ class TestPublicDocument:
         b = data['blocks'][0]
         assert 'pending_suggestions' not in b
 
+    def test_public_view_includes_accept_with_edits_metadata(
+        self, auth_client, user, client, document, block, pending_suggestion
+    ):
+        url = (
+            f'/api/v1/documents/{document.pk}/blocks/{block.pk}'
+            f'/suggestions/{pending_suggestion.pk}/accept-with-edits/'
+        )
+        resp = auth_client.post(
+            url,
+            {'text': 'Edited AI text'},
+            content_type='application/json',
+        )
+        assert resp.status_code == 200
+
+        public_resp = client.get(
+            f'/api/v1/public/{document.public_token}/'
+        )
+        assert public_resp.status_code == 200
+        data = public_resp.json()
+        current = data['blocks'][0]['current_version']
+        assert current['text'] == 'Edited AI text'
+        assert current['author_type'] == 'human'
+        assert current['decision_type'] == 'accept_with_edits'
+        assert current['approved_by'] == user.username
+
 
 @pytest.mark.django_db
 class TestOnboardingDocument:

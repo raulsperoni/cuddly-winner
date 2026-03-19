@@ -206,13 +206,12 @@ class PublicBlockSerializer(serializers.ModelSerializer):
         v = obj.current_version()
         if v:
             data = {'text': v.text, 'author_type': v.author_type}
-            if v.author_type == 'ai':
-                decision = (
-                    v.decisions.select_related('decided_by').first()
-                )
-                if decision:
-                    data['approved_by'] = decision.decided_by.username
-                    data['decision_type'] = decision.decision_type
+            decision = (
+                v.decisions.select_related('decided_by').first()
+            )
+            if decision:
+                data['approved_by'] = decision.decided_by.username
+                data['decision_type'] = decision.decision_type
             return data
         return None
 
