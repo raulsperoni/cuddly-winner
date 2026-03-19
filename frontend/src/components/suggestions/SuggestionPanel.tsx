@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { EditorContent, useEditor } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import { Markdown } from 'tiptap-markdown'
 import { DiffView } from './DiffView'
 import { api } from '../../api/client'
 import { useDocumentStore } from '../../stores/document'
 import type { Block, Suggestion } from '../../api/types'
 import { useLocale } from '../../lib/i18n'
+import { buildEditorExtensions } from '../../lib/editor'
 
 interface Props {
   block: Block
@@ -31,10 +30,7 @@ export function SuggestionPanel({
 
   const editEditor = useEditor(
     {
-      extensions: [
-        StarterKit,
-        Markdown.configure({ html: false, transformPastedText: true }),
-      ],
+      extensions: buildEditorExtensions(true),
       content: suggestion?.text ?? '',
       editable: true,
     },

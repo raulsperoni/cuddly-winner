@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Lora:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: #f6f0e7;
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: #2f2923;
+  }
+
+  .bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 70% at 5% 50%, rgba(155, 108, 22, 0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 50% at 90% 90%, rgba(47, 127, 100, 0.06) 0%, transparent 60%),
+      #f6f0e7;
+  }
+
+  .rule-top {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #9b6c16 30%, #9b6c16 70%, transparent);
+    opacity: 0.5;
+  }
+
+  .layout {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 1px 560px;
+    height: 100%;
+  }
+
+  .divider {
+    background: linear-gradient(to bottom,
+      transparent,
+      rgba(118, 103, 90, 0.22) 10%,
+      rgba(118, 103, 90, 0.22) 90%,
+      transparent
+    );
+  }
+
+  /* ── LEFT ── */
+  .left {
+    padding: 52px 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .brand-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    color: #171311;
+    letter-spacing: 0.04em;
+  }
+
+  .brand-tld { color: #9b6c16; }
+
+  .title-block {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 24px 0;
+  }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #9b6c16;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 18px; height: 1px;
+    background: #9b6c16;
+    opacity: 0.55;
+  }
+
+  h1 {
+    font-family: 'Lora', serif;
+    font-size: 50px;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: #171311;
+    margin-bottom: 18px;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: #9b6c16;
+  }
+
+  .tagline {
+    font-size: 14.5px;
+    color: #8f847a;
+    line-height: 1.65;
+    max-width: 310px;
+  }
+
+  .tagline strong {
+    color: #665d56;
+    font-weight: 500;
+  }
+
+  .stats {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .stat { display: flex; flex-direction: column; gap: 2px; }
+
+  .stat-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    color: #171311;
+    letter-spacing: -0.02em;
+  }
+
+  .stat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: #8f847a;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  .stat-sep {
+    width: 1px; height: 26px;
+    background: rgba(118, 103, 90, 0.22);
+  }
+
+  /* ── RIGHT: Diff ── */
+  .right {
+    padding: 48px 48px 48px 52px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .diff-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #9b6c16;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .diff-label::before {
+    content: '';
+    display: inline-block;
+    width: 14px; height: 1px;
+    background: #9b6c16;
+    opacity: 0.5;
+  }
+
+  .diff-box {
+    border: 1px solid rgba(118, 103, 90, 0.22);
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(255, 252, 248, 0.7);
+  }
+
+  .diff-header {
+    padding: 9px 16px;
+    background: rgba(240, 233, 223, 0.6);
+    border-bottom: 1px solid rgba(118, 103, 90, 0.15);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: #8f847a;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .diff-file { color: #665d56; }
+
+  .diff-lines { display: flex; flex-direction: column; }
+
+  .diff-line {
+    display: flex;
+    align-items: baseline;
+    padding: 7px 16px;
+    gap: 14px;
+    font-family: 'Lora', serif;
+    font-size: 13px;
+    line-height: 1.6;
+    border-bottom: 1px solid rgba(118, 103, 90, 0.07);
+  }
+
+  .diff-line:last-child { border-bottom: none; }
+
+  .diff-gutter {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    width: 14px;
+    flex-shrink: 0;
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  .diff-line.removed {
+    background: rgba(157, 68, 68, 0.07);
+  }
+  .diff-line.removed .diff-gutter { color: #9d4444; }
+  .diff-line.removed .diff-text {
+    color: #9d4444;
+    text-decoration: line-through;
+    text-decoration-color: rgba(157, 68, 68, 0.45);
+  }
+
+  .diff-line.added {
+    background: rgba(47, 127, 100, 0.07);
+  }
+  .diff-line.added .diff-gutter { color: #2f7f64; }
+  .diff-line.added .diff-text { color: #2f7f64; }
+
+  .diff-line.context {
+    background: transparent;
+  }
+  .diff-line.context .diff-gutter { color: rgba(118, 103, 90, 0.3); }
+  .diff-line.context .diff-text { color: #8f847a; }
+
+  .diff-text { flex: 1; }
+
+  /* Actions below diff */
+  .diff-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 5px 14px;
+    border-radius: 4px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .btn-accept {
+    background: rgba(47, 127, 100, 0.12);
+    color: #2f7f64;
+    border: 1px solid rgba(47, 127, 100, 0.28);
+  }
+
+  .btn-reject {
+    background: transparent;
+    color: #8f847a;
+    border: 1px solid rgba(118, 103, 90, 0.28);
+  }
+
+  .btn-edit {
+    background: transparent;
+    color: #8f847a;
+    border: 1px solid rgba(118, 103, 90, 0.28);
+  }
+
+  .author-chip {
+    margin-left: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: #8f847a;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .author-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #9b6c16;
+  }
+</style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="rule-top"></div>
+
+  <div class="layout">
+
+    <!-- LEFT -->
+    <div class="left">
+      <div class="logo-row">
+        <svg width="34" height="34" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#1f1a16" />
+              <stop offset="100%" stop-color="#6f4b11" />
+            </linearGradient>
+          </defs>
+          <rect width="64" height="64" rx="16" fill="url(#bg)" />
+          <path d="M18 16h20c7.7 0 14 6.3 14 14s-6.3 14-14 14H28v10H18V16Zm10 18h10a4 4 0 1 0 0-8H28v8Z" fill="#f7f1e7"/>
+          <path d="M20 50h26" stroke="#d4a652" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+        <span class="brand-name">DraftingDocs<span class="brand-tld">.org</span></span>
+      </div>
+
+      <div class="title-block">
+        <div class="eyebrow">Policy Document Drafting</div>
+        <h1>Pull Requests<br>for <em>Prose</em></h1>
+        <p class="tagline">
+          Every AI suggestion requires an<br>
+          <strong>explicit human decision.</strong><br>
+          Full lineage. Full accountability.
+        </p>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-value">100%</span>
+          <span class="stat-label">Human-approved</span>
+        </div>
+        <div class="stat-sep"></div>
+        <div class="stat">
+          <span class="stat-value">∞</span>
+          <span class="stat-label">Audit trail</span>
+        </div>
+        <div class="stat-sep"></div>
+        <div class="stat">
+          <span class="stat-value">0</span>
+          <span class="stat-label">Auto-applied</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- RIGHT: Diff -->
+    <div class="right">
+      <div class="diff-label">AI Suggestion · Pending Review</div>
+
+      <div class="diff-box">
+        <div class="diff-header">
+          <span class="diff-file">art-12-data-governance.md</span>
+          <span>§ 3 — Supervisory Authority</span>
+        </div>
+        <div class="diff-lines">
+          <div class="diff-line context">
+            <span class="diff-gutter"> </span>
+            <span class="diff-text">States shall ensure independent oversight of this regulation.</span>
+          </div>
+          <div class="diff-line removed">
+            <span class="diff-gutter">−</span>
+            <span class="diff-text">A supervisory body may be established at the discretion of each member state.</span>
+          </div>
+          <div class="diff-line added">
+            <span class="diff-gutter">+</span>
+            <span class="diff-text">Each member state <em>shall</em> designate a competent authority with adequate resources and full operational independence.</span>
+          </div>
+          <div class="diff-line context">
+            <span class="diff-gutter"> </span>
+            <span class="diff-text">The authority shall publish an annual compliance report.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="diff-actions">
+        <span class="btn btn-accept">✓ Accept</span>
+        <span class="btn btn-reject">✗ Reject</span>
+        <span class="btn btn-edit">✎ Edit</span>
+        <span class="author-chip">
+          <span class="author-dot"></span>
+          AI suggestion · awaiting decision
+        </span>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

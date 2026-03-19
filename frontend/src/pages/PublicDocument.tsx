@@ -1,40 +1,25 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { EditorContent, useEditor } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import { Markdown } from 'tiptap-markdown'
 import { api } from '../api/client'
 import type { PublicBlock, PublicDocument as PublicDocumentType } from '../api/types'
 import { AuthorshipBadge } from '../components/shared/AuthorshipBadge'
 import { BRAND_DOMAIN, BRAND_NAME } from '../lib/brand'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { useLocale } from '../lib/i18n'
+import { buildEditorExtensions } from '../lib/editor'
 
 function PublicBlockView({ block }: { block: PublicBlock }) {
   const { t } = useLocale()
   const content = block.current_version?.text ?? ''
   const editor = useEditor(
     {
-      extensions: [
-        StarterKit,
-        Markdown.configure({ html: false, transformPastedText: true }),
-      ],
+      extensions: buildEditorExtensions(false),
       content,
       editable: false,
     },
-    [block.id],
+    [block.id, content],
   )
-
-  const setMarkdownContent = (nextContent: string) => {
-    if (!editor) return
-    const parsed = editor.storage.markdown.parser.parse(nextContent || '')
-    editor.commands.setContent(parsed)
-  }
-
-  useEffect(() => {
-    if (!editor) return
-    setMarkdownContent(content)
-  }, [editor, content])
 
   return (
     <article className="grid grid-cols-[3rem_minmax(0,1fr)] gap-3 md:grid-cols-[3.5rem_minmax(0,1fr)] md:gap-4">

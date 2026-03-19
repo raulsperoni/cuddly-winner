@@ -43,6 +43,18 @@ const translations = {
     documentListIntro:
       'Draft and review documents with clear provenance, paragraph-level history, and exportable records.',
     brandTagline: 'AI-assisted drafting with full traceability',
+    aboutHeading: 'About',
+    aboutVisionIntro:
+      'DraftingDocs explores a drafting environment where AI can help write, but every change remains accountable.',
+    aboutVisionBody:
+      'Instead of silently rewriting text, AI suggestions behave like pull requests for prose: proposed changes that must be accepted by a human before entering the canonical document.',
+    aboutVisionRule:
+      'Nothing enters the canonical document without a recorded human decision.',
+    aboutLinksLabel: 'More from Raúl',
+    aboutBlog: 'Blog',
+    aboutGitHub: 'GitHub',
+    aboutBluesky: 'Bluesky',
+    aboutLinkCta: 'About this project',
     owner: 'owner',
     shared: 'shared',
     collaborator: 'collaborator',
@@ -136,6 +148,8 @@ const translations = {
     toolbarItalic: 'Italic',
     toolbarBullets: 'Bullets',
     toolbarNumbers: 'Numbered',
+    toolbarLink: 'Link',
+    toolbarLinkPrompt: 'Paste a URL. Leave blank to remove the link.',
     editorShortcuts: '⌘↵ save revision · Esc cancel',
     emptyParagraph: 'Empty paragraph',
     sharedDocument: 'Shared document',
@@ -202,6 +216,18 @@ const translations = {
     documentListIntro:
       'Redacta y revisa documentos con procedencia clara, historial por párrafo y registros exportables.',
     brandTagline: 'Redacción asistida por IA con trazabilidad completa',
+    aboutHeading: 'Acerca de',
+    aboutVisionIntro:
+      'DraftingDocs explora un entorno de redacción donde la IA puede ayudar a escribir, pero cada cambio sigue siendo responsable y rastreable.',
+    aboutVisionBody:
+      'En lugar de reescribir texto en silencio, las sugerencias de IA funcionan como pull requests para prosa: cambios propuestos que deben ser aceptados por una persona antes de entrar al documento canónico.',
+    aboutVisionRule:
+      'Nada entra en el documento canónico sin una decisión humana registrada.',
+    aboutLinksLabel: 'Más de Raúl',
+    aboutBlog: 'Blog',
+    aboutGitHub: 'GitHub',
+    aboutBluesky: 'Bluesky',
+    aboutLinkCta: 'Acerca de este proyecto',
     owner: 'propietario',
     shared: 'compartido',
     collaborator: 'colaborador',
@@ -295,6 +321,8 @@ const translations = {
     toolbarItalic: 'Cursiva',
     toolbarBullets: 'Viñetas',
     toolbarNumbers: 'Numerada',
+    toolbarLink: 'Enlace',
+    toolbarLinkPrompt: 'Pega una URL. Déjalo vacío para quitar el enlace.',
     editorShortcuts: '⌘↵ guardar revisión · Esc cancelar',
     emptyParagraph: 'Párrafo vacío',
     sharedDocument: 'Documento compartido',

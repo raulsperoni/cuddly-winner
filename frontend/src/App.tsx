@@ -58,6 +58,10 @@ const PublicDocumentPage = lazyPage(
   () => import('./pages/PublicDocument'),
   'PublicDocument',
 )
+const AboutPage = lazyPage(
+  () => import('./pages/AboutPage'),
+  'AboutPage',
+)
 
 const router = createBrowserRouter([
   {
@@ -68,6 +72,14 @@ const router = createBrowserRouter([
       {
         index: true,
         element: withSuspense(DocumentListPage),
+      },
+      {
+        path: 'about',
+        element: withSuspense(AboutPage),
+      },
+      {
+        path: 'about/',
+        element: withSuspense(AboutPage),
       },
       {
         path: 'documents/new',

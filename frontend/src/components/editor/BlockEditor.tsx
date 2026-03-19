@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { EditorContent, useEditor } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import { Markdown } from 'tiptap-markdown'
+import { BubbleMenu, EditorContent, useEditor } from '@tiptap/react'
 import { useLocale } from '../../lib/i18n'
+import { buildEditorExtensions, promptForLink } from '../../lib/editor'
 
 interface Props {
   blockId: number
@@ -32,10 +31,7 @@ export function BlockEditor({
 
   const editor = useEditor(
     {
-      extensions: [
-        StarterKit,
-        Markdown.configure({ html: false, transformPastedText: true }),
-      ],
+      extensions: buildEditorExtensions(true),
       content: text,
       editable: isEditing,
     },
@@ -96,49 +92,87 @@ export function BlockEditor({
   }
 
   const canStartEdit = !isEditing && !hasPendingSuggestions
-  const toolbarButton = (
+  const menuButton = (
     active: boolean,
     onClick: () => void,
     label: string,
+    children: React.ReactNode,
   ) => (
     <button
       type="button"
+      title={label}
+      aria-label={label}
+      onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`rounded-sm border px-2 py-1 text-[11px] font-mono transition-colors ${
+      className={`flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-[12px] font-mono transition-colors ${
         active
-          ? '[border-color:var(--accent)] [background:var(--accent-soft)] [color:var(--accent)]'
-          : '[border-color:var(--border-subtle)] [color:var(--text-subtle)] hover:[color:var(--text-main)]'
+          ? '[background:var(--text-main)] text-[var(--app-bg)]'
+          : '[color:var(--text-subtle)] hover:[background:var(--surface-1)] hover:[color:var(--text-main)]'
       }`}
     >
-      {label}
+      {children}
     </button>
   )
 
   return (
     <div onKeyDown={handleKeyDown}>
       {isEditing && editor ? (
-        <div className="mb-4 flex flex-wrap items-center gap-2 border-b pb-3 [border-color:var(--border-subtle)]">
-          {toolbarButton(
-            editor.isActive('bold'),
-            () => editor.chain().focus().toggleBold().run(),
-            t('toolbarBold'),
-          )}
-          {toolbarButton(
-            editor.isActive('italic'),
-            () => editor.chain().focus().toggleItalic().run(),
-            t('toolbarItalic'),
-          )}
-          {toolbarButton(
-            editor.isActive('bulletList'),
-            () => editor.chain().focus().toggleBulletList().run(),
-            t('toolbarBullets'),
-          )}
-          {toolbarButton(
-            editor.isActive('orderedList'),
-            () => editor.chain().focus().toggleOrderedList().run(),
-            t('toolbarNumbers'),
-          )}
-        </div>
+        <BubbleMenu
+          editor={editor}
+          tippyOptions={{ duration: 120, placement: 'top', offset: [0, 10] }}
+          shouldShow={({ editor: currentEditor, state }) => {
+            const { from, to } = state.selection
+            return currentEditor.isEditable && from !== to
+          }}
+        >
+          <div className="flex items-center gap-1 rounded-xl border px-1.5 py-1 shadow-lg backdrop-blur-sm [border-color:var(--border-subtle)] [background:color-mix(in_srgb,var(--surface-elevated)_92%,transparent)]">
+            {menuButton(
+              editor.isActive('bold'),
+              () => editor.chain().focus().toggleBold().run(),
+              t('toolbarBold'),
+              <span className="text-[13px] font-black">B</span>,
+            )}
+            {menuButton(
+              editor.isActive('italic'),
+              () => editor.chain().focus().toggleItalic().run(),
+              t('toolbarItalic'),
+              <span className="text-[13px] italic">I</span>,
+            )}
+            {menuButton(
+              editor.isActive('bulletList'),
+              () => editor.chain().focus().toggleBulletList().run(),
+              t('toolbarBullets'),
+              <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-current">
+                <circle cx="3" cy="4" r="1.2" />
+                <circle cx="3" cy="8" r="1.2" />
+                <circle cx="3" cy="12" r="1.2" />
+                <rect x="6" y="3.25" width="7" height="1.5" rx="0.75" />
+                <rect x="6" y="7.25" width="7" height="1.5" rx="0.75" />
+                <rect x="6" y="11.25" width="7" height="1.5" rx="0.75" />
+              </svg>,
+            )}
+            {menuButton(
+              editor.isActive('orderedList'),
+              () => editor.chain().focus().toggleOrderedList().run(),
+              t('toolbarNumbers'),
+              <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-current">
+                <path d="M1.9 3.2h1V1.8h-.8L1.3 2.4v.9l.6-.5ZM1.2 8.8h1.9v-.7H2.2l.5-.5a1.3 1.3 0 0 0 .5-1c0-.8-.6-1.3-1.5-1.3-.6 0-1 .2-1.5.6l.4.7c.3-.3.6-.4.9-.4.4 0 .7.2.7.5 0 .2-.1.4-.4.7l-1.1 1v.4Zm.6 4.1c.6 0 1.1-.2 1.4-.5.2-.2.3-.5.3-.8 0-.6-.4-1-1-1.1.5-.2.8-.6.8-1 0-.8-.7-1.3-1.7-1.3-.5 0-1 .1-1.4.4l.3.7c.3-.2.6-.3 1-.3.5 0 .8.2.8.5 0 .4-.4.6-1 .6h-.3v.7h.3c.7 0 1.1.2 1.1.6 0 .3-.3.5-.8.5-.4 0-.8-.1-1.2-.4l-.3.7c.4.4 1 .7 1.7.7Z" />
+                <rect x="6" y="3.25" width="7" height="1.5" rx="0.75" />
+                <rect x="6" y="7.25" width="7" height="1.5" rx="0.75" />
+                <rect x="6" y="11.25" width="7" height="1.5" rx="0.75" />
+              </svg>,
+            )}
+            <div className="mx-1 h-5 w-px [background:var(--border-subtle)]" />
+            {menuButton(
+              editor.isActive('link'),
+              () => promptForLink(editor, t('toolbarLinkPrompt')),
+              t('toolbarLink'),
+              <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-current">
+                <path d="M6.2 4.5a2.7 2.7 0 0 1 3.8 0l.7.7-.9.9-.7-.7a1.5 1.5 0 1 0-2.1 2.1l.7.7-.9.9-.7-.7a2.7 2.7 0 0 1 0-3.9Zm3.6 1.6.9-.9.7.7a2.7 2.7 0 1 1-3.8 3.8l-.7-.7.9-.9.7.7a1.5 1.5 0 0 0 2.1-2.1l-.7-.7ZM5.8 8.7l2.9-2.9.9.9-2.9 2.9-.9-.9Z" />
+              </svg>,
+            )}
+          </div>
+        </BubbleMenu>
       ) : null}
 
       <div

@@ -81,6 +81,14 @@ export function DocumentList() {
               </a>
             </div>
           )}
+          <div className="pt-1">
+            <Link
+              to="/about"
+              className="text-xs font-mono transition-colors [color:var(--text-subtle)] hover:[color:var(--text-main)]"
+            >
+              {t('aboutLinkCta')}
+            </Link>
+          </div>
         </section>
 
         <h2 className="mb-6 text-xs font-mono uppercase tracking-widest [color:var(--text-subtle)]">

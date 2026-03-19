@@ -687,6 +687,14 @@ class TestNoBulkAccept:
 
 @pytest.mark.django_db
 class TestPublicDocument:
+    def test_public_route_renders_spa_shell(self, client, document):
+        resp = client.get(f'/p/{document.public_token}/')
+        assert resp.status_code == 200
+        body = resp.content.decode()
+        assert '<div id="root"></div>' in body
+        assert 'document_editor_shell' not in body
+        assert '<section class="doc-body">' not in body
+
     def test_public_view_unauthenticated(self, client, document, block):
         resp = client.get(
             f'/api/v1/public/{document.public_token}/'

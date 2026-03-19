@@ -5,8 +5,6 @@ from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils.html import strip_tags
-from django.utils.text import Truncator
 
 from .models import (
     Document, DocumentMembership,
@@ -24,6 +22,10 @@ def _get_document_access(document, user):
     return None
 
 
+def _og_image_url(request):
+    return request.build_absolute_uri('/static/frontend/og-image.png')
+
+
 def spa_shell(request, **kwargs):
     return render(
         request,
@@ -33,6 +35,7 @@ def spa_shell(request, **kwargs):
             'current_username': (
                 request.user.username if request.user.is_authenticated else ''
             ),
+            'og_image_url': _og_image_url(request),
         },
     )
 
@@ -54,45 +57,22 @@ def document_editor_spa(request, pk):
             'current_username': (
                 request.user.username if request.user.is_authenticated else ''
             ),
+            'og_image_url': _og_image_url(request),
         },
     )
 
 
 def public_spa_shell(request, token):
-    doc = get_object_or_404(Document, public_token=token)
-    blocks = []
-    for block in doc.blocks.order_by('position'):
-        version = block.current_version()
-        blocks.append(
-            {
-                'position': block.position,
-                'text': version.text if version else '',
-            }
-        )
-
-    first_text = next((b['text'] for b in blocks if b['text'].strip()), '')
-    meta_description_source = doc.description.strip() or first_text
-    meta_description = Truncator(strip_tags(meta_description_source)).chars(160)
-    canonical_url = request.build_absolute_uri()
-    title = doc.title or 'Shared document'
-
+    get_object_or_404(Document, public_token=token)
     return render(
         request,
-        'core/public_document.html',
+        'core/document_editor_shell.html',
         {
-            'document': doc,
-            'blocks': blocks,
-            'canonical_url': canonical_url,
-            'meta_title': f'{title} · DraftingDocs',
-            'meta_description': meta_description or 'Public drafting document',
-            'meta_robots': (
-                'index, follow'
-                if doc.status == Document.STATUS_PUBLISHED
-                else 'noindex, nofollow'
-            ),
+            'debug': settings.DEBUG,
             'current_username': (
                 request.user.username if request.user.is_authenticated else ''
             ),
+            'og_image_url': _og_image_url(request),
         },
     )
 
