@@ -8,6 +8,7 @@ spa = views.spa_shell
 urlpatterns = [
     # --- React SPA entry points ---
     path('', spa, name='home'),
+    path('about/', spa, name='about'),
     path('documents/new/', spa, name='document_create'),
     path('documents/<int:pk>/', spa, name='document_detail'),
     path(
