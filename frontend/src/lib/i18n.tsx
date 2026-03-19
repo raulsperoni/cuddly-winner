@@ -36,6 +36,7 @@ const translations = {
     goToDocuments: 'Go to documents',
     reloadPage: 'Reload page',
     newDocument: 'New document',
+    addParagraph: '+ Add paragraph',
     createDocument: 'Create document',
     createYourFirstDocument: 'Create your first document →',
     noDocumentsYet: 'No documents yet.',
@@ -145,6 +146,7 @@ const translations = {
     failedToLoadPublicDocument: ({ error = '' }) =>
       `Failed to load public document: ${error}`,
     noParagraphsYet: 'No paragraphs yet.',
+    noParagraphsEditor: 'No paragraphs yet. Add one to start drafting.',
     eventDocumentCreated: 'Document created',
     eventBlockCreated: 'Paragraph added',
     eventBlockEdited: 'Paragraph revised',
@@ -191,6 +193,7 @@ const translations = {
     goToDocuments: 'Ir a documentos',
     reloadPage: 'Recargar página',
     newDocument: 'Nuevo documento',
+    addParagraph: '+ Agregar párrafo',
     createDocument: 'Crear documento',
     createYourFirstDocument: 'Crear tu primer documento →',
     noDocumentsYet: 'Todavía no hay documentos.',
@@ -300,6 +303,7 @@ const translations = {
     failedToLoadPublicDocument: ({ error = '' }) =>
       `No se pudo cargar el documento público: ${error}`,
     noParagraphsYet: 'Todavía no hay párrafos.',
+    noParagraphsEditor: 'Todavía no hay párrafos. Agrega uno para comenzar a redactar.',
     eventDocumentCreated: 'Documento creado',
     eventBlockCreated: 'Párrafo agregado',
     eventBlockEdited: 'Párrafo revisado',

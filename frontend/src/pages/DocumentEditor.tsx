@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { useDocumentStore } from '../stores/document'
+import { useUIStore } from '../stores/ui'
 import { BlockList } from '../components/editor/BlockList'
 import { NavBar } from '../components/shared/NavBar'
 import type { Member } from '../api/types'
@@ -20,9 +21,11 @@ export function DocumentEditor() {
   const documentId = parseInt(id ?? '0', 10)
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const { document, blocks, error, setDocument, setError } = useDocumentStore()
+  const { document, blocks, error, setDocument, setError, addBlock } = useDocumentStore()
+  const setEditingBlock = useUIStore((s) => s.setEditingBlock)
   const [snapshotOpen, setSnapshotOpen] = useState(false)
   const [members, setMembers] = useState<Member[]>([])
+  const [addingParagraph, setAddingParagraph] = useState(false)
 
   useEffect(() => {
     if (!documentId) return
@@ -57,6 +60,18 @@ export function DocumentEditor() {
     const next = new URLSearchParams(searchParams)
     next.delete('join_status')
     setSearchParams(next, { replace: true })
+  }
+
+  const handleAddParagraph = async () => {
+    if (!document || !document.can_edit || addingParagraph) return
+    setAddingParagraph(true)
+    try {
+      const block = await api.createBlock(documentId, { position: blocks.length })
+      addBlock(block)
+      setEditingBlock(block.id)
+    } finally {
+      setAddingParagraph(false)
+    }
   }
 
   usePageTitle(document?.title ? `${document.title} · ${t('editor')}` : t('editor'))
@@ -195,6 +210,10 @@ export function DocumentEditor() {
           canEdit={document.can_edit}
           canDecide={document.can_decide}
           canSuggest={document.can_request_suggestions}
+          onAddParagraph={document.can_edit ? handleAddParagraph : undefined}
+          addingParagraph={addingParagraph}
+          addParagraphLabel={t('addParagraph')}
+          emptyStateLabel={t('noParagraphsEditor')}
         />
       </main>
 

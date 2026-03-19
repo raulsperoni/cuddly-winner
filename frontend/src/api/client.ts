@@ -48,6 +48,15 @@ export const api = {
       body: JSON.stringify({ text }),
     }),
 
+  createBlock: (
+    docId: number,
+    data: { text?: string; position?: number } = {},
+  ): Promise<Block> =>
+    request(`/api/v1/documents/${docId}/blocks/`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   deleteBlock: (docId: number, blockId: number): Promise<void> =>
     request(`/api/v1/documents/${docId}/blocks/${blockId}/`, {
       method: 'DELETE',

@@ -6,6 +6,7 @@ interface DocumentState {
   blocks: Block[]
   error: string | null
   setDocument: (doc: Document) => void
+  addBlock: (block: Block) => void
   updateBlock: (block: Block) => void
   removeBlock: (blockId: number) => void
   addSuggestionToBlock: (blockId: number, suggestion: Suggestion) => void
@@ -22,6 +23,11 @@ export const useDocumentStore = create<DocumentState>((set) => ({
       document: doc,
       blocks: [...(doc.blocks ?? [])].sort((a, b) => a.position - b.position),
     }),
+
+  addBlock: (block) =>
+    set((state) => ({
+      blocks: [...state.blocks, block].sort((a, b) => a.position - b.position),
+    })),
 
   updateBlock: (block) =>
     set((state) => ({
