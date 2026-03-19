@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { BubbleMenu, EditorContent, useEditor } from '@tiptap/react'
+import { EditorContent, useEditor } from '@tiptap/react'
 import { useLocale } from '../../lib/i18n'
 import { buildEditorExtensions, promptForLink } from '../../lib/editor'
 
@@ -28,6 +28,12 @@ export function BlockEditor({
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const prevTextRef = useRef(text)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const [menuState, setMenuState] = useState({
+    visible: false,
+    left: 0,
+    top: 0,
+  })
 
   const editor = useEditor(
     {
@@ -59,6 +65,49 @@ export function BlockEditor({
     prevTextRef.current = text
     setMarkdownContent(text)
   }, [text, editor, isEditing])
+
+  useEffect(() => {
+    if (!editor || !isEditing) {
+      setMenuState((current) => ({ ...current, visible: false }))
+      return
+    }
+
+    const updateMenu = () => {
+      const host = containerRef.current
+      const { from, to } = editor.state.selection
+
+      if (!host || from === to || !editor.isEditable) {
+        setMenuState((current) => ({ ...current, visible: false }))
+        return
+      }
+
+      const start = editor.view.coordsAtPos(from)
+      const end = editor.view.coordsAtPos(to)
+      const hostRect = host.getBoundingClientRect()
+      const centerX = (start.left + end.right) / 2
+
+      setMenuState({
+        visible: true,
+        left: Math.max(24, Math.min(centerX - hostRect.left, hostRect.width - 24)),
+        top: Math.max(0, Math.min(start.top - hostRect.top - 52, hostRect.height - 40)),
+      })
+    }
+
+    const hideMenu = () => {
+      setMenuState((current) => ({ ...current, visible: false }))
+    }
+
+    updateMenu()
+    editor.on('selectionUpdate', updateMenu)
+    editor.on('focus', updateMenu)
+    editor.on('blur', hideMenu)
+
+    return () => {
+      editor.off('selectionUpdate', updateMenu)
+      editor.off('focus', updateMenu)
+      editor.off('blur', hideMenu)
+    }
+  }, [editor, isEditing])
 
   const handleSave = async () => {
     if (!editor) return
@@ -115,17 +164,17 @@ export function BlockEditor({
   )
 
   return (
-    <div onKeyDown={handleKeyDown}>
-      {isEditing && editor ? (
-        <BubbleMenu
-          editor={editor}
-          tippyOptions={{ duration: 120, placement: 'top', offset: [0, 10] }}
-          shouldShow={({ editor: currentEditor, state }) => {
-            const { from, to } = state.selection
-            return currentEditor.isEditable && from !== to
+    <div ref={containerRef} onKeyDown={handleKeyDown} className="relative">
+      {isEditing && editor && menuState.visible ? (
+        <div
+          className="pointer-events-none absolute z-20"
+          style={{
+            left: `${menuState.left}px`,
+            top: `${menuState.top}px`,
+            transform: 'translateX(-50%)',
           }}
         >
-          <div className="flex items-center gap-1 rounded-xl border px-1.5 py-1 shadow-lg backdrop-blur-sm [border-color:var(--border-subtle)] [background:color-mix(in_srgb,var(--surface-elevated)_92%,transparent)]">
+          <div className="pointer-events-auto flex items-center gap-1 rounded-xl border px-1.5 py-1 shadow-lg backdrop-blur-sm [border-color:var(--border-subtle)] [background:color-mix(in_srgb,var(--surface-elevated)_92%,transparent)]">
             {menuButton(
               editor.isActive('bold'),
               () => editor.chain().focus().toggleBold().run(),
@@ -172,7 +221,7 @@ export function BlockEditor({
               </svg>,
             )}
           </div>
-        </BubbleMenu>
+        </div>
       ) : null}
 
       <div

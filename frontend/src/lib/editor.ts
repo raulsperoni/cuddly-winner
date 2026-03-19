@@ -54,13 +54,18 @@ export function buildEditorExtensions(editable: boolean) {
 }
 
 export function promptForLink(editor: Editor, promptLabel: string): void {
+  const { from, to } = editor.state.selection
   const currentHref = editor.getAttributes('link').href as string | undefined
   const nextHref = window.prompt(promptLabel, currentHref ?? 'https://')
 
   if (nextHref === null) return
 
   const trimmedHref = nextHref.trim()
-  const chain = editor.chain().focus().extendMarkRange('link')
+  const chain = editor
+    .chain()
+    .focus()
+    .setTextSelection({ from, to })
+    .extendMarkRange('link')
 
   if (!trimmedHref) {
     chain.unsetLink().run()
