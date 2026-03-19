@@ -27,8 +27,7 @@ function PublicBlockView({ block }: { block: PublicBlock }) {
 
   const setMarkdownContent = (nextContent: string) => {
     if (!editor) return
-    const parsed = editor.storage.markdown.parser.parse(nextContent || '')
-    editor.commands.setContent(parsed)
+    editor.commands.setContent(nextContent || '')
   }
 
   useEffect(() => {

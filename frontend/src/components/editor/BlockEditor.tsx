@@ -44,8 +44,7 @@ export function BlockEditor({
 
   const setMarkdownContent = (content: string) => {
     if (!editor) return
-    const parsed = editor.storage.markdown.parser.parse(content || '')
-    editor.commands.setContent(parsed)
+    editor.commands.setContent(content || '')
   }
 
   useEffect(() => {
